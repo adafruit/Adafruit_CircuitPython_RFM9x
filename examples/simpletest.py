@@ -25,7 +25,7 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
 # Note that the radio is configured in LoRa mode so you can't control sync
-# word, encryption, freqiency deviation, or other settings!
+# word, encryption, frequency deviation, or other settings!
 
 # Send a packet.  Note you can only send a packet up to 252 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
