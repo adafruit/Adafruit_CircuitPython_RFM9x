@@ -27,6 +27,10 @@ rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 # Note that the radio is configured in LoRa mode so you can't control sync
 # word, encryption, frequency deviation, or other settings!
 
+# You can however adjust the transmit power (in dB).  The default is 13 dB but
+# high power radios like the RFM95 can go up to 23 dB:
+rfm9x.tx_power = 23
+
 # Send a packet.  Note you can only send a packet up to 252 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
 # amounts of data you will need to break it into smaller send calls.  Each send
@@ -56,3 +60,7 @@ while True:
         # sending side is sending ASCII data before you try to decode!
         packet_text = str(packet, 'ascii')
         print('Received (ASCII): {0}'.format(packet_text))
+        # Also read the RSSI (signal strength) of the last received message and
+        # print it.
+        rssi = rfm9x.rssi
+        print('Received signal strength: {0} dB'.format(rssi))
