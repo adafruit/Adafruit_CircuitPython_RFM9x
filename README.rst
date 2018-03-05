@@ -9,8 +9,8 @@ Introduction
     :target: https://discord.gg/nBQh6qu
     :alt: Discord
 
-.. image:: https://travis-ci.org/adafruit/adafruit_CircuitPython_rfm9x.svg?branch=master
-    :target: https://travis-ci.org/adafruit/adafruit_CircuitPython_rfm9x
+.. image:: https://travis-ci.org/adafruit/Adafruit_CircuitPython_RFM9x.svg?branch=master
+    :target: https://travis-ci.org/adafruit/Adafruit_CircuitPython_RFM9x
     :alt: Build Status
 
 CircuitPython module for the RFM95/6/7/8 LoRa 433/915mhz radio modules.
