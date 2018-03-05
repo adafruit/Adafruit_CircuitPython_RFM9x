@@ -26,7 +26,7 @@ install:
   - pip install pylint circuitpython-build-tools Sphinx sphinx-rtd-theme
 
 script:
-  - pylint adafruit_rfm95.py
+  - pylint adafruit_rfm9x.py
   - ([[ ! -d "examples" ]] || pylint --disable=missing-docstring,invalid-name,bad-whitespace examples/*.py)
   - circuitpython-build-bundles --filename_prefix adafruit-circuitpython-rfm9x --library_location .
   - cd docs && sphinx-build -E -W -b html . _build/html
