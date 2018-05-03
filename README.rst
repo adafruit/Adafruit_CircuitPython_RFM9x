@@ -30,6 +30,19 @@ Usage Example
 =============
 
 See examples/simpletest.py for a demo of the usage.
+Note: the default baudrate for the SPI is 10000000 (10MHz). This works well when you are using a board with 
+the radio module built in (FeatherM0 RFM9x) or with an RFM9x FeatherWing mounted directly to a feather board.
+For breakout boards or other configurations where the boards are separated, it may be necessary to reduce
+the baudrate for reliable data transmission.
+The baud rate may be specified as an keyword parameter when initializing the board.
+To set it to 1000000 use :
+
+.. code-block:: python
+
+    # Initialze RFM radio
+    rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ,baudrate=1000000)
+
+
 
 Contributing
 ============

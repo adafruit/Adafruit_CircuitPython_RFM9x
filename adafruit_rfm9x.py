@@ -30,7 +30,7 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 * Author(s): Tony DiCola
 """
 import time
-
+import digitalio
 from micropython import const
 
 import adafruit_bus_device.spi_device as spi_device
@@ -344,7 +344,7 @@ class RFM9x:
         # trigger a reset.  Note that reset MUST be done like this and set as
         # a high impedence input or else the chip cannot change modes (trust me!).
         self._reset = reset
-        self._reset.switch_to_input()
+        self._reset.switch_to_input(pull=digitalio.Pull.UP)
         self.reset()
         # No device type check!  Catch an error from the very first request and
         # throw a nicer message to indicate possible wiring problems.
@@ -421,7 +421,7 @@ class RFM9x:
         # See section 7.2.2 of the datasheet for reset description.
         self._reset.switch_to_output(value=False)
         time.sleep(0.0001)  # 100 us
-        self._reset.switch_to_input()
+        self._reset.switch_to_input(pull=digitalio.Pull.UP)
         time.sleep(0.005)   # 5 ms
 
     def idle(self):
