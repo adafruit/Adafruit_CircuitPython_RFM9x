@@ -36,7 +36,8 @@ For breakout boards or other configurations where the boards are separated, it m
 the baudrate for reliable data transmission.
 The baud rate may be specified as an keyword parameter when initializing the board.
 To set it to 1000000 use :
-.. code-block:: python# Initialze RFM radio
+.. code-block:: python
+    # Initialze RFM radio
     rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ,baudrate=1000000)
 
 
