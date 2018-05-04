@@ -496,10 +496,10 @@ class RFM9x:
         high power devices (RFM95/96/97/98, high_power=True) or -1 to 14 for low
         power devices. Only integer power levels are actually set (i.e. 12.5
         will result in a value of 12 dBm).
-        The actual maximum setting for high_power=True is 20dBm but for values > 20 
+        The actual maximum setting for high_power=True is 20dBm but for values > 20
         the PA_BOOST will be enabled  resultiung in ad additonla gain of 3dBm.
-        Theactual setting is reduced by 3dBm. 
-        The reported value will reflect the reduded setting.
+        Theactual setting is reduced by 3dBm.
+        The reported value will reflect the reduced setting.
         """
         if self.high_power:
             return self.output_power + 5
