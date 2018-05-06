@@ -27,7 +27,7 @@ CircuitPython module for the RFM95/6/7/8 LoRa 433/915mhz radio modules.  This is
 adapted from the Radiohead library RF95 code from:
 http: www.airspayce.com/mikem/arduino/RadioHead/
 
-* Author(s): Tony DiCola
+* Author(s): Tony DiCola, Jerry Needell
 """
 import time
 import digitalio
@@ -334,9 +334,10 @@ class RFM9x:
     rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
 
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
-                 high_power=True, baudrate=1000000):
+                 high_power=True, baudrate=5000000):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
+        # Set Default Baudrate to 5MHz to avoid problems
         self._device = spi_device.SPIDevice(spi, cs, baudrate=baudrate,
                                             polarity=0, phase=0)
         # Setup reset as a digital input (default state for reset line according
@@ -361,8 +362,9 @@ class RFM9x:
                 raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
         except OSError:
             raise RuntimeError('Failed to communicate with radio, check wiring!')
-        # clear default setting ofr access to LF registers
-        self.low_frequency_mode = 0
+        # clear default setting for access to LF registers if frquency > 525MHz
+        if frequency > 525:
+            self.low_frequency_mode = 0
         # Setup entire 256 byte FIFO
         self._write_u8(_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR, 0x00)
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
@@ -532,10 +534,11 @@ class RFM9x:
         # Remember in LoRa mode the payload register changes function to RSSI!
         return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
 
-    def send(self, data, timeout_s=1.):
+    def send(self, data, timeout_s=2.):
         """Send a string of data using the transmitter.  You can only send 252
         bytes at a time (limited by chip's FIFO size and appended headers). Note
         this appends a 4 byte header to be compatible with the RadioHead library.
+        The timeout is just to prevent a hang (arbitrarily set to 2 Seconds).
         """
         # Disable pylint warning to not use length as a check for zero.
         # This is a puzzling warning as the below code is clearly the most

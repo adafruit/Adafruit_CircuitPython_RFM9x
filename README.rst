@@ -29,9 +29,9 @@ This is easily achieved by downloading
 Usage Example
 =============
 
-See examples/simpletest.py for a demo of the usage.
-Note: the default baudrate for the SPI is 10000000 (10MHz). This works well when you are using a board with 
-the radio module built in (FeatherM0 RFM9x) or with an RFM9x FeatherWing mounted directly to a feather board.
+See examples/rfm9x_simpletest.py for a demo of the usage.
+Note: the default baudrate for the SPI is 50000000 (5MHz). The maximum setting is 10Mhz but 
+transmission errors have been observed expecially when using breakout boards.
 For breakout boards or other configurations where the boards are separated, it may be necessary to reduce
 the baudrate for reliable data transmission.
 The baud rate may be specified as an keyword parameter when initializing the board.
