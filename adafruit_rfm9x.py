@@ -266,7 +266,7 @@ class RFM9x:
     # at least as large as the FIFO on the chip (256 bytes)!  Keep this on the
     # class level to ensure only one copy ever exists (with the trade-off that
     # this is NOT re-entrant or thread safe code by design).
-    _BUFFER = bytearray(256)
+    _BUFFER = bytearray(10)
 
     class _RegisterBits:
         # Class to simplify access to the many configuration bits avaialable
@@ -334,7 +334,7 @@ class RFM9x:
     rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
 
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
-                 high_power=True, baudrate=10000000):
+                 high_power=True, baudrate=1000000):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         self._device = spi_device.SPIDevice(spi, cs, baudrate=baudrate,
@@ -532,7 +532,7 @@ class RFM9x:
         # Remember in LoRa mode the payload register changes function to RSSI!
         return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
 
-    def send(self, data, timeout_s = 1.):
+    def send(self, data, timeout_s=1.):
         """Send a string of data using the transmitter.  You can only send 252
         bytes at a time (limited by chip's FIFO size and appended headers). Note
         this appends a 4 byte header to be compatible with the RadioHead library.
@@ -605,12 +605,11 @@ class RFM9x:
                 # Reset the fifo read ptr to the beginning of the packet.
                 current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
                 self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-                # Read the first 4 bytes to grab the header.
-                self._read_into(_RH_RF95_REG_00_FIFO, self._BUFFER, length=4)
-                length -= 4
-                # Next read the remaining data into a result packet buffer.
                 packet = bytearray(length)
+                # Read the packet.
                 self._read_into(_RH_RF95_REG_00_FIFO, packet)
+                # strip off the header
+                packet = packet[4:]
             # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()

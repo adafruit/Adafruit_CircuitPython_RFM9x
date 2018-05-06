@@ -606,10 +606,11 @@ class RFM9x:
                 current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
                 self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
                 # Read the first 4 bytes to grab the header.
-                self._read_into(_RH_RF95_REG_00_FIFO, self._BUFFER)
-                #length -= 4
+                self._read_into(_RH_RF95_REG_00_FIFO, self._BUFFER, length=4)
+                length -= 4
                 # Next read the remaining data into a result packet buffer.
-                packet = self._BUFFER[0:length-1]
+                packet = bytearray(length)
+                self._read_into(_RH_RF95_REG_00_FIFO, packet)
             # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
