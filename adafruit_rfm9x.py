@@ -120,7 +120,7 @@ _RH_RF95_PA_RAMP_3_4MS                       = const(0x00)
 _RH_RF95_PA_RAMP_2MS                         = const(0x01)
 _RH_RF95_PA_RAMP_1MS                         = const(0x02)
 _RH_RF95_PA_RAMP_500US                       = const(0x03)
-_RH_RF95_PA_RAMP_250US                       = const(0x0)
+_RH_RF95_PA_RAMP_250US                       = const(0x04)
 _RH_RF95_PA_RAMP_125US                       = const(0x05)
 _RH_RF95_PA_RAMP_100US                       = const(0x06)
 _RH_RF95_PA_RAMP_62US                        = const(0x07)
@@ -212,7 +212,7 @@ _RH_RF95_PA_DAC_ENABLE                       = const(0x07)
 _RH_RF95_FXOSC = 32000000.0
 
 # The Frequency Synthesizer step = RH_RF95_FXOSC / 2^^19
-_RH_RF95_FSTEP = (_RH_RF95_FXOSC // 524288)
+_RH_RF95_FSTEP = (_RH_RF95_FXOSC / 524288)
 
 # RadioHead specific compatibility constants.
 _RH_BROADCAST_ADDRESS = const(0xFF)
@@ -361,6 +361,8 @@ class RFM9x:
                 raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
         except OSError:
             raise RuntimeError('Failed to communicate with radio, check wiring!')
+        # clear default setting ofr access to LF registers
+        self.low_frequency_mode = 0
         # Setup entire 256 byte FIFO
         self._write_u8(_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR, 0x00)
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
@@ -487,8 +489,6 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_06_FRF_MSB, msb)
         self._write_u8(_RH_RF95_REG_07_FRF_MID, mid)
         self._write_u8(_RH_RF95_REG_08_FRF_LSB, lsb)
-        if val >= 565:
-            self.low_frequency_mode = 0
 
     @property
     def tx_power(self):
