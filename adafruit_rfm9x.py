@@ -499,8 +499,8 @@ class RFM9x:
         power devices. Only integer power levels are actually set (i.e. 12.5
         will result in a value of 12 dBm).
         The actual maximum setting for high_power=True is 20dBm but for values > 20
-        the PA_BOOST will be enabled  resultiung in ad additonla gain of 3dBm.
-        Theactual setting is reduced by 3dBm.
+        the PA_BOOST will be enabled  resultiung in an additonal gain of 3dBm.
+        The actual setting is reduced by 3dBm.
         The reported value will reflect the reduced setting.
         """
         if self.high_power:
@@ -534,7 +534,7 @@ class RFM9x:
         # Remember in LoRa mode the payload register changes function to RSSI!
         return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
 
-    def send(self, data, timeout_s=2.):
+    def send(self, data, timeout=2.):
         """Send a string of data using the transmitter.  You can only send 252
         bytes at a time (limited by chip's FIFO size and appended headers). Note
         this appends a 4 byte header to be compatible with the RadioHead library.
@@ -566,14 +566,16 @@ class RFM9x:
         start = time.monotonic()
         timed_out = False
         while not timed_out and not self.tx_done:
-            if (time.monotonic() - start) >= timeout_s:
+            if (time.monotonic() - start) >= timeout:
                 timed_out = True
         # Go back to idle mode after transmit.
         self.idle()
         # Clear interrupts.
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        if timed_out:
+            raise RuntimeError('Timeout during packet send')
 
-    def receive(self, timeout_s=0.5, keep_listening=True):
+    def receive(self, timeout=0.5, keep_listening=True):
         """Wait to receive a packet from the receiver. Will wait for up to
         timeout_s amount of seconds for a packet to be received and decoded. If
         a packet is found the payload bytes are returned, otherwise None is
@@ -593,7 +595,7 @@ class RFM9x:
         start = time.monotonic()
         timed_out = False
         while not timed_out and not self.rx_done:
-            if (time.monotonic() - start) >= timeout_s:
+            if (time.monotonic() - start) >= timeout:
                 timed_out = True
         # Payload ready is set, a packet is in the FIFO.
         packet = None
