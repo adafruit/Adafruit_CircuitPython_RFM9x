@@ -577,7 +577,7 @@ class RFM9x:
 
     def receive(self, timeout=0.5, keep_listening=True):
         """Wait to receive a packet from the receiver. Will wait for up to
-        timeout_s amount of seconds for a packet to be received and decoded. If
+        timeout amount of seconds for a packet to be received and decoded. If
         a packet is found the payload bytes are returned, otherwise None is
         returned (which indicates the timeout elapsed with no reception). Note
         this assumes a 4-byte header is prepended to the data for compatibilty
