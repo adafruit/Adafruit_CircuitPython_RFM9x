@@ -27,7 +27,7 @@ CircuitPython module for the RFM95/6/7/8 LoRa 433/915mhz radio modules.  This is
 adapted from the Radiohead library RF95 code from:
 http: www.airspayce.com/mikem/arduino/RadioHead/
 
-* Author(s): Tony DiCola
+* Author(s): Tony DiCola, Jerry Needell
 """
 import time
 import digitalio
@@ -120,7 +120,7 @@ _RH_RF95_PA_RAMP_3_4MS                       = const(0x00)
 _RH_RF95_PA_RAMP_2MS                         = const(0x01)
 _RH_RF95_PA_RAMP_1MS                         = const(0x02)
 _RH_RF95_PA_RAMP_500US                       = const(0x03)
-_RH_RF95_PA_RAMP_250US                       = const(0x0)
+_RH_RF95_PA_RAMP_250US                       = const(0x04)
 _RH_RF95_PA_RAMP_125US                       = const(0x05)
 _RH_RF95_PA_RAMP_100US                       = const(0x06)
 _RH_RF95_PA_RAMP_62US                        = const(0x07)
@@ -212,7 +212,7 @@ _RH_RF95_PA_DAC_ENABLE                       = const(0x07)
 _RH_RF95_FXOSC = 32000000.0
 
 # The Frequency Synthesizer step = RH_RF95_FXOSC / 2^^19
-_RH_RF95_FSTEP = (_RH_RF95_FXOSC // 524288)
+_RH_RF95_FSTEP = (_RH_RF95_FXOSC / 524288)
 
 # RadioHead specific compatibility constants.
 _RH_BROADCAST_ADDRESS = const(0xFF)
@@ -266,7 +266,7 @@ class RFM9x:
     # at least as large as the FIFO on the chip (256 bytes)!  Keep this on the
     # class level to ensure only one copy ever exists (with the trade-off that
     # this is NOT re-entrant or thread safe code by design).
-    _BUFFER = bytearray(256)
+    _BUFFER = bytearray(10)
 
     class _RegisterBits:
         # Class to simplify access to the many configuration bits avaialable
@@ -334,9 +334,10 @@ class RFM9x:
     rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
 
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
-                 high_power=True, baudrate=10000000):
+                 high_power=True, baudrate=5000000):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
+        # Set Default Baudrate to 5MHz to avoid problems
         self._device = spi_device.SPIDevice(spi, cs, baudrate=baudrate,
                                             polarity=0, phase=0)
         # Setup reset as a digital input (default state for reset line according
@@ -361,12 +362,15 @@ class RFM9x:
                 raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
         except OSError:
             raise RuntimeError('Failed to communicate with radio, check wiring!')
+        # clear default setting for access to LF registers if frequency > 525MHz
+        if frequency > 525:
+            self.low_frequency_mode = 0
         # Setup entire 256 byte FIFO
         self._write_u8(_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR, 0x00)
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
         # Set mode idle
         self.idle()
-        # Set modem config to RadioHead comaptible Bw125Cr45Sf128 mode.
+        # Set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_1D_MODEM_CONFIG1, 0x72)  # Fei msb?
         self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, 0x74)  # Fei lsb?
@@ -374,7 +378,7 @@ class RFM9x:
         # Set preamble length (default 8 bytes to match radiohead).
         self.preamble_length = preamble_length
         # Set frequency
-        self.frequency = frequency
+        self.frequency_mhz = frequency
         # Set TX power to low defaut, 13 dB.
         self.tx_power = 13
 
@@ -494,6 +498,10 @@ class RFM9x:
         high power devices (RFM95/96/97/98, high_power=True) or -1 to 14 for low
         power devices. Only integer power levels are actually set (i.e. 12.5
         will result in a value of 12 dBm).
+        The actual maximum setting for high_power=True is 20dBm but for values > 20
+        the PA_BOOST will be enabled resulting in an additional gain of 3dBm.
+        The actual setting is reduced by 3dBm.
+        The reported value will reflect the reduced setting.
         """
         if self.high_power:
             return self.output_power + 5
@@ -505,14 +513,17 @@ class RFM9x:
         if self.high_power:
             assert 5 <= val <= 23
             # Enable power amp DAC if power is above 20 dB.
+            # Lower setting by 3db when PA_BOOST enabled - see Data Sheet  Section 6.4
             if val > 20:
                 self.pa_dac = _RH_RF95_PA_DAC_ENABLE
+                val -= 3
             else:
                 self.pa_dac = _RH_RF95_PA_DAC_DISABLE
             self.pa_select = True
             self.output_power = (val - 5) & 0x0F
         else:
             assert -1 <= val <= 14
+            self.pa_select = False
             self.max_power = 0b111  # Allow max power output.
             self.output_power = (val + 1) & 0x0F
 
@@ -523,10 +534,11 @@ class RFM9x:
         # Remember in LoRa mode the payload register changes function to RSSI!
         return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
 
-    def send(self, data):
+    def send(self, data, timeout=2.):
         """Send a string of data using the transmitter.  You can only send 252
         bytes at a time (limited by chip's FIFO size and appended headers). Note
         this appends a 4 byte header to be compatible with the RadioHead library.
+        The timeout is just to prevent a hang (arbitrarily set to 2 Seconds).
         """
         # Disable pylint warning to not use length as a check for zero.
         # This is a puzzling warning as the below code is clearly the most
@@ -551,16 +563,21 @@ class RFM9x:
         self.transmit()
         # Wait for tx done interrupt with explicit polling (not ideal but
         # best that can be done right now without interrupts).
-        while not self.tx_done:
-            pass
-        # Clear interrupts.
-        self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        start = time.monotonic()
+        timed_out = False
+        while not timed_out and not self.tx_done:
+            if (time.monotonic() - start) >= timeout:
+                timed_out = True
         # Go back to idle mode after transmit.
         self.idle()
+        # Clear interrupts.
+        self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        if timed_out:
+            raise RuntimeError('Timeout during packet send')
 
-    def receive(self, timeout_s=0.5, keep_listening=True):
+    def receive(self, timeout=0.5, keep_listening=True):
         """Wait to receive a packet from the receiver. Will wait for up to
-        timeout_s amount of seconds for a packet to be received and decoded. If
+        timeout amount of seconds for a packet to be received and decoded. If
         a packet is found the payload bytes are returned, otherwise None is
         returned (which indicates the timeout elapsed with no reception). Note
         this assumes a 4-byte header is prepended to the data for compatibilty
@@ -576,32 +593,34 @@ class RFM9x:
         # enough, however it's the best that can be done from Python without
         # interrupt supports.
         start = time.monotonic()
-        while not self.rx_done:
-            if (time.monotonic() - start) >= timeout_s:
-                return None  # Exceeded timeout.
-        # Clear interrupt.
-        self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
+        timed_out = False
+        while not timed_out and not self.rx_done:
+            if (time.monotonic() - start) >= timeout:
+                timed_out = True
         # Payload ready is set, a packet is in the FIFO.
         packet = None
-        # Enter idle mode to stop receiving other packets.
-        self.idle()
-        # Grab the length of the received packet and check it has at least 5
-        # bytes to indicate the 4 byte header and at least 1 byte of user data.
-        length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
-        if length < 5:
-            packet = None
-        else:
-            # Have a good packet, grab it from the FIFO.
-            # Reset the fifo read ptr to the beginning of the packet.
-            current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-            self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-            # Read the first 4 bytes to grab the header.
-            self._read_into(_RH_RF95_REG_00_FIFO, self._BUFFER, length=4)
-            length -= 4
-            # Next read the remaining data into a result packet buffer.
-            packet = bytearray(length)
-            self._read_into(_RH_RF95_REG_00_FIFO, packet)
-        # Listen again if necessary and return the result packet.
+        if not timed_out:
+            # Grab the length of the received packet and check it has at least 5
+            # bytes to indicate the 4 byte header and at least 1 byte of user data.
+            length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+            if length < 5:
+                packet = None
+            else:
+                # Have a good packet, grab it from the FIFO.
+                # Reset the fifo read ptr to the beginning of the packet.
+                current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+                self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+                packet = bytearray(length)
+                # Read the packet.
+                self._read_into(_RH_RF95_REG_00_FIFO, packet)
+                # strip off the header
+                packet = packet[4:]
+            # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
+        else:
+        # Enter idle mode to stop receiving other packets.
+            self.idle()
+        # Clear interrupt.
+        self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return packet
