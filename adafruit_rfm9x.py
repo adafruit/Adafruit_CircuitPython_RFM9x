@@ -362,7 +362,7 @@ class RFM9x:
                 raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
         except OSError:
             raise RuntimeError('Failed to communicate with radio, check wiring!')
-        # clear default setting for access to LF registers if frquency > 525MHz
+        # clear default setting for access to LF registers if frequency > 525MHz
         if frequency > 525:
             self.low_frequency_mode = 0
         # Setup entire 256 byte FIFO
@@ -370,7 +370,7 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
         # Set mode idle
         self.idle()
-        # Set modem config to RadioHead comaptible Bw125Cr45Sf128 mode.
+        # Set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_1D_MODEM_CONFIG1, 0x72)  # Fei msb?
         self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, 0x74)  # Fei lsb?
@@ -499,7 +499,7 @@ class RFM9x:
         power devices. Only integer power levels are actually set (i.e. 12.5
         will result in a value of 12 dBm).
         The actual maximum setting for high_power=True is 20dBm but for values > 20
-        the PA_BOOST will be enabled  resultiung in an additonal gain of 3dBm.
+        the PA_BOOST will be enabled resulting in an additional gain of 3dBm.
         The actual setting is reduced by 3dBm.
         The reported value will reflect the reduced setting.
         """
