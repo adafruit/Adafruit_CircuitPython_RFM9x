@@ -382,6 +382,8 @@ class RFM9x:
         # Set TX power to low defaut, 13 dB.
         self.tx_power = 13
 
+    # pylint: disable=no-member
+    # Reconsider pylint: disable when this can be tested
     def _read_into(self, address, buf, length=None):
         # Read a number of bytes from the specified address into the provided
         # buffer.  If length is not specified (the default) the entire buffer
