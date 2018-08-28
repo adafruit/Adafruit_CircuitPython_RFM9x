@@ -37,7 +37,7 @@ rfm9x.tx_power = 23
 # amounts of data you will need to break it into smaller send calls.  Each send
 # call will wait for the previous one to finish before continuing.
 rfm9x.send(bytes("Hello world!\r\n","utf-8"))
-print('Sent hello world message!')
+print('Sent Hello World message!')
 
 # Wait to receive packets.  Note that this library can't receive data at a fast
 # rate, in fact it can only receive and process one 252 byte packet at a time.
