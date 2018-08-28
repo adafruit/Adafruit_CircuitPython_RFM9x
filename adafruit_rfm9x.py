@@ -353,11 +353,8 @@ class RFM9x:
             # Set sleep mode, wait 10s and confirm in sleep mode (basic device check).
             # Also set long range mode (LoRa mode) as it can only be done in sleep.
             self.sleep()
-            self.long_range_mode = True
-            #self._write_u8(_RH_RF95_REG_01_OP_MODE, 0b10001000)
             time.sleep(0.01)
-            #val = self._read_u8(_RH_RF95_REG_01_OP_MODE)
-            #print('op mode: {0}'.format(bin(val)))
+            self.long_range_mode = True
             if self.operation_mode != SLEEP_MODE or not self.long_range_mode:
                 raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
         except OSError:
