@@ -633,7 +633,7 @@ class RFM9x:
             if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
                     and packet[0] != rx_filter):
                 packet = None
-            if not with_header:  # skip the header if not wanted
+            elif not with_header:  # skip the header if not wanted
                 packet = packet[4:]
             # Listen again if necessary and return the result packet.
         if keep_listening:
