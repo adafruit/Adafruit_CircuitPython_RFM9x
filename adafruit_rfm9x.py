@@ -630,11 +630,11 @@ class RFM9x:
                 packet = bytearray(length)
                 # Read the packet.
                 self._read_into(_RH_RF95_REG_00_FIFO, packet)
-            if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
-                    and packet[0] != rx_filter):
-                packet = None
-            elif not with_header:  # skip the header if not wanted
-                packet = packet[4:]
+                if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
+                        and packet[0] != rx_filter):
+                    packet = None
+                elif not with_header:  # skip the header if not wanted
+                    packet = packet[4:]
             # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
