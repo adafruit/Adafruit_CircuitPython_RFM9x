@@ -19,6 +19,10 @@ RESET = digitalio.DigitalInOut(board.D6)
 # CS = digitalio.DigitalInOut(board.RFM9X_CS)
 # RESET = digitalio.DigitalInOut(board.RFM9X_RST)
 
+# Define the onboard LED
+LED = digitalio.DigitalInOut(board.D13)
+LED.direction = digitalio.Direction.OUTPUT
+
 # Initialize SPI bus.
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
@@ -44,15 +48,19 @@ print('Sent Hello World message!')
 # This means you should only use this for low bandwidth scenarios, like sending
 # and receiving a single message at a time.
 print('Waiting for packets...')
+
 while True:
     packet = rfm9x.receive()
     # Optionally change the receive timeout from its default of 0.5 seconds:
     #packet = rfm9x.receive(timeout=5.0)
     # If no packet was received during the timeout then None is returned.
     if packet is None:
+        # Packet has not been received
+        LED.value = False
         print('Received nothing! Listening again...')
     else:
         # Received a packet!
+        LED.value = True
         # Print out the raw bytes of the packet:
         print('Received (raw bytes): {0}'.format(packet))
         # And decode to ASCII text and print it too.  Note that you always
