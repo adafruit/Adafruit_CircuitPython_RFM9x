@@ -19,6 +19,10 @@ RESET = digitalio.DigitalInOut(board.D6)
 # CS = digitalio.DigitalInOut(board.RFM9X_CS)
 # RESET = digitalio.DigitalInOut(board.RFM9X_RST)
 
+ # Define the onboard LED
+ LED = digitalio.DigitalInOut(board.D13)
+ LED.direction = digitalio.Direction.OUTPUT
+
 # Initialize SPI bus.
 spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 
@@ -32,6 +36,9 @@ rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 # high power radios like the RFM95 can go up to 23 dB:
 rfm9x.tx_power = 23
 
+# Packet counter, incremented per tx
+packetNum = 0
+
 # Send a packet.  Note you can only send a packet up to 252 bytes in length.
 # This is a limitation of the radio packet size, so if you need to send larger
 # amounts of data you will need to break it into smaller send calls.  Each send
@@ -44,15 +51,19 @@ print('Sent Hello World message!')
 # This means you should only use this for low bandwidth scenarios, like sending
 # and receiving a single message at a time.
 print('Waiting for packets...')
+
 while True:
+
     packet = rfm9x.receive()
     # Optionally change the receive timeout from its default of 0.5 seconds:
     #packet = rfm9x.receive(timeout=5.0)
     # If no packet was received during the timeout then None is returned.
     if packet is None:
+        LED.value = False
         print('Received nothing! Listening again...')
     else:
         # Received a packet!
+        LED.value = True
         # Print out the raw bytes of the packet:
         print('Received (raw bytes): {0}'.format(packet))
         # And decode to ASCII text and print it too.  Note that you always
