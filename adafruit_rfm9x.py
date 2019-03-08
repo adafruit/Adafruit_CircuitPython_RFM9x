@@ -192,6 +192,8 @@ _RH_RF95_RX_PAYLOAD_CRC_ON                   = const(0x02)
 _RH_RF95_LOW_DATA_RATE_OPTIMIZE              = const(0x01)
 
 # RH_RF95_REG_1E_MODEM_CONFIG2                       0x1e
+_RH_RF95_DETECTION_OPTIMIZE                  = const(0x31)
+_RH_RF95_DETECTION_THRESHOLD                 = const(0x37)
 _RH_RF95_SPREADING_FACTOR                    = const(0xf0)
 _RH_RF95_SPREADING_FACTOR_64CPS              = const(0x60)
 _RH_RF95_SPREADING_FACTOR_128CPS             = const(0x70)
@@ -334,7 +336,8 @@ class RFM9x:
     rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
 
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
-                 high_power=True, baudrate=5000000):
+                 high_power=True, baudrate=5000000, signal_bandwidth=125000,
+                 coding_rate=5, spreading_factor=7):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
@@ -367,10 +370,37 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
         # Set mode idle
         self.idle()
-        # Set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
+        # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
+        # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
+        bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
+        for bw, cutoff in enumerate(bins):
+            if bandwidth <= cutoff:
+                break
+        else:
+            bw = 9
+        self._write_u8(
+            _RH_RF95_REG_1D_MODEM_CONFIG1,
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bw << 4)
+        )
+        # Set coding rate (set to 5 to match RadioHead Cr45).
+        denominator = min(max(coding_rate, 5), 8)
+        cr = denominator - 4
+        self._write_u8(
+            _RH_RF95_REG_1D_MODEM_CONFIG1,
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) | (cr << 1)
+        )
+        # Set spreading factor (set to 7 to match RadioHead Sf128).
+        sf = min(max(spreading_factor, 6), 12)
+        self._write_u8(_RH_RF95_DETECTION_OPTIMIZE, 0xc5 if sf == 6 else 0xc3)
+        self._write_u8(_RH_RF95_DETECTION_THRESHOLD, 0x0c if sf == 6 else 0x0a)
+        self._write_u8(
+            _RH_RF95_REG_1E_MODEM_CONFIG2,
+            (
+                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) | 
+                ((sf << 4) & 0xf0)
+            )
+        )
         # Note no sync word is set for LoRa mode either!
-        self._write_u8(_RH_RF95_REG_1D_MODEM_CONFIG1, 0x72)  # Fei msb?
-        self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, 0x74)  # Fei lsb?
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
         # Set preamble length (default 8 bytes to match radiohead).
         self.preamble_length = preamble_length

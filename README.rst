@@ -29,7 +29,26 @@ This is easily achieved by downloading
 Usage Example
 =============
 
-See examples/rfm9x_simpletest.py for a demo of the usage.
+Initialization of the RFM radio requires specifying a frequency appropriate to
+your radio hardware (i.e. 868-915 or 433 MHz) and specifying the pins used in your
+wiring from the controller board to the radio module.
+
+This example code matches the wiring used in the
+`LoRa and LoRaWAN Radio for Raspberry Pi <https://learn.adafruit.com/lora-and-lorawan-radio-for-raspberry-pi/>`_
+project:
+
+.. code-block:: python
+    import digitalio
+    import board
+    import busio
+    import adafruit_rfm9x
+
+    RADIO_FREQ_MHZ = 915.0
+    CS = digitalio.DigitalInOut(board.CE1)
+    RESET = digitalio.DigitalInOut(board.D25)
+    spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
+    rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
+
 Note: the default baudrate for the SPI is 50000000 (5MHz). The maximum setting is 10Mhz but 
 transmission errors have been observed expecially when using breakout boards.
 For breakout boards or other configurations where the boards are separated, it may be necessary to reduce
@@ -39,9 +58,21 @@ To set it to 1000000 use :
 
 .. code-block:: python
 
-    # Initialze RFM radio
+    # Initialze RFM radio with a more conservative baudrate
     rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ, baudrate=1000000)
 
+Optional controls exist to alter the signal bandwidth, coding rate, and spreading factor
+settings used by the radio to achieve better performance in different environments.
+By default, settings compatible with RadioHead Bw125Cr45Sf128 mode are used, matching
+the following example:
+
+.. code-block:: python
+
+    # Initialze RFM radio with conservative baudrate and default modem config
+    rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ, baudrate=1000000,
+                                 signal_bandwidth=125000, coding_rate=5, spreading_factor=7)
+
+See examples/rfm9x_simpletest.py for an expanded demo of the usage.
 
 
 Contributing
