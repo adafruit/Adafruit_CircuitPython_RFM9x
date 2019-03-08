@@ -38,6 +38,7 @@ This example code matches the wiring used in the
 project:
 
 .. code-block:: python
+
     import digitalio
     import board
     import busio
