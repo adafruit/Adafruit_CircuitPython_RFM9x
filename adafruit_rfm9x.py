@@ -374,7 +374,7 @@ class RFM9x:
         # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
         bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
         for bw, cutoff in enumerate(bins):
-            if bandwidth <= cutoff:
+            if signal_bandwidth <= cutoff:
                 break
         else:
             bw = 9
