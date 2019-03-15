@@ -33,6 +33,12 @@ import time
 import digitalio
 from micropython import const
 
+try:
+    from warnings import warn
+except ImportError:
+    def warn(msg, cat=None, stacklevel=1):
+        print("%s: %s" % ("Warning" if cat is None else cat.__name__, msg))
+
 import adafruit_bus_device.spi_device as spidev
 
 
@@ -335,6 +341,8 @@ class RFM9x:
 
     rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
 
+    crc_error = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=5, bits=1)
+
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
                  high_power=True, baudrate=5000000, signal_bandwidth=125000,
                  coding_rate=5, spreading_factor=7, enable_crc=False):
@@ -403,7 +411,10 @@ class RFM9x:
         # Optionally enable CRC checking on incoming packets.
         if enable_crc:
             config = self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
-            self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, config)
+        else:
+            config = self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
+        self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, config)
+        self.enable_crc = enable_crc
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
         # Set preamble length (default 8 bytes to match radiohead).
@@ -651,25 +662,28 @@ class RFM9x:
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         if not timed_out:
-            # Grab the length of the received packet and check it has at least 5
-            # bytes to indicate the 4 byte header and at least 1 byte of user data.
-            length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
-            if length < 5:
-                packet = None
+            if self.enable_crc and self.crc_error:
+                warn("CRC error, packet ignored")
             else:
-                # Have a good packet, grab it from the FIFO.
-                # Reset the fifo read ptr to the beginning of the packet.
-                current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-                self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-                packet = bytearray(length)
-                # Read the packet.
-                self._read_into(_RH_RF95_REG_00_FIFO, packet)
-                if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
-                        and packet[0] != rx_filter):
+                # Grab the length of the received packet and check it has at least 5
+                # bytes to indicate the 4 byte header and at least 1 byte of user data.
+                length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+                if length < 5:
                     packet = None
-                elif not with_header:  # skip the header if not wanted
-                    packet = packet[4:]
-            # Listen again if necessary and return the result packet.
+                else:
+                    # Have a good packet, grab it from the FIFO.
+                    # Reset the fifo read ptr to the beginning of the packet.
+                    current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+                    self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+                    packet = bytearray(length)
+                    # Read the packet.
+                    self._read_into(_RH_RF95_REG_00_FIFO, packet)
+                    if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
+                            and packet[0] != rx_filter):
+                        packet = None
+                    elif not with_header:  # skip the header if not wanted
+                        packet = packet[4:]
+        # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
         else:
