@@ -36,8 +36,9 @@ from micropython import const
 try:
     from warnings import warn
 except ImportError:
-    def warn(msg, cat=None, stacklevel=1):
-        print("%s: %s" % ("Warning" if cat is None else cat.__name__, msg))
+    def warn(msg, **kwargs):
+        # Issue a warning to stdout.
+        print("%s: %s" % ("Warning" if kwargs.get("cat") is None else kwargs["cat"].__name__, msg))
 
 import adafruit_bus_device.spi_device as spidev
 
@@ -343,6 +344,8 @@ class RFM9x:
 
     crc_error = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=5, bits=1)
 
+    bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
+
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
                  high_power=True, baudrate=5000000, signal_bandwidth=125000,
                  coding_rate=5, spreading_factor=7, enable_crc=False):
@@ -380,32 +383,36 @@ class RFM9x:
         self.idle()
         # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
         # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
-        bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
-        for bw, cutoff in enumerate(bins):
+        for bwid, cutoff in enumerate(self.bw_bins):
             if signal_bandwidth <= cutoff:
                 break
         else:
-            bw = 9
+            bwid = 9
         self._write_u8(
             _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bw << 4)
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bwid << 4)
         )
         # Set coding rate (set to 5 to match RadioHead Cr45).
-        denominator = min(max(coding_rate, 5), 8)
-        cr = denominator - 4
         self._write_u8(
             _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) | (cr << 1)
+            (
+                (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) |
+                ((min(max(coding_rate, 5), 8) - 4) << 1)
+            )
         )
         # Set spreading factor (set to 7 to match RadioHead Sf128).
-        sf = min(max(spreading_factor, 6), 12)
-        self._write_u8(_RH_RF95_DETECTION_OPTIMIZE, 0xc5 if sf == 6 else 0xc3)
-        self._write_u8(_RH_RF95_DETECTION_THRESHOLD, 0x0c if sf == 6 else 0x0a)
+        spreading_factor = min(max(spreading_factor, 6), 12)
+        self._write_u8(
+            _RH_RF95_DETECTION_OPTIMIZE, 0xc5 if spreading_factor == 6 else 0xc3
+        )
+        self._write_u8(
+            _RH_RF95_DETECTION_THRESHOLD, 0x0c if spreading_factor == 6 else 0x0a
+        )
         self._write_u8(
             _RH_RF95_REG_1E_MODEM_CONFIG2,
             (
-                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) | 
-                ((sf << 4) & 0xf0)
+                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) |
+                ((spreading_factor << 4) & 0xf0)
             )
         )
         # Optionally enable CRC checking on incoming packets.
