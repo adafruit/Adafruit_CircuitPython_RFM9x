@@ -64,15 +64,16 @@ To set it to 1000000 use :
 
 Optional controls exist to alter the signal bandwidth, coding rate, and spreading factor
 settings used by the radio to achieve better performance in different environments.
-By default, settings compatible with RadioHead Bw125Cr45Sf128 mode are used, matching
-the following example:
+By default, settings compatible with RadioHead Bw125Cr45Sf128 mode are used, which can
+be altered in the following manner (continued from the above example):
 
 .. code-block:: python
 
-    # Initialze RFM radio with conservative baudrate and default modem config
-    rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ, baudrate=1000000,
-                                 signal_bandwidth=125000, coding_rate=5, spreading_factor=7,
-                                 enable_crc=False)
+    # Apply new modem config settings to the radio to improve its effective range
+    rfm9x.signal_bandwidth = 62500
+    rfm9x.coding_rate = 6
+    rfm9x.spreading_factor = 8
+    rfm9x.enable_crc = True
 
 See examples/rfm9x_simpletest.py for an expanded demo of the usage.
 

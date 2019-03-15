@@ -347,8 +347,7 @@ class RFM9x:
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
-                 high_power=True, baudrate=5000000, signal_bandwidth=125000,
-                 coding_rate=5, spreading_factor=7, enable_crc=False):
+                 high_power=True, baudrate=5000000):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
@@ -382,51 +381,11 @@ class RFM9x:
         # Set mode idle
         self.idle()
         # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
-        # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
-        for bwid, cutoff in enumerate(self.bw_bins):
-            if signal_bandwidth <= cutoff:
-                break
-        else:
-            bwid = 9
-        self._write_u8(
-            _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bwid << 4)
-        )
-        # Set coding rate (set to 5 to match RadioHead Cr45).
-        self._write_u8(
-            _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (
-                (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) |
-                ((min(max(coding_rate, 5), 8) - 4) << 1)
-            )
-        )
-        # Set spreading factor (set to 7 to match RadioHead Sf128).
-        spreading_factor = min(max(spreading_factor, 6), 12)
-        self._write_u8(
-            _RH_RF95_DETECTION_OPTIMIZE, 0xc5 if spreading_factor == 6 else 0xc3
-        )
-        self._write_u8(
-            _RH_RF95_DETECTION_THRESHOLD, 0x0c if spreading_factor == 6 else 0x0a
-        )
-        self._write_u8(
-            _RH_RF95_REG_1E_MODEM_CONFIG2,
-            (
-                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) |
-                ((spreading_factor << 4) & 0xf0)
-            )
-        )
-        # Optionally enable CRC checking on incoming packets.
-        if enable_crc:
-            self._write_u8(
-                _RH_RF95_REG_1E_MODEM_CONFIG2,
-                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
-            )
-        else:
-            self._write_u8(
-                _RH_RF95_REG_1E_MODEM_CONFIG2,
-                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
-            )
-        self.enable_crc = enable_crc
+        self.signal_bandwidth = 125000
+        self.coding_rate = 5
+        self.spreading_factor = 7
+        # Default to disable CRC checking on incoming packets.
+        self.enable_crc = False
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
         # Set preamble length (default 8 bytes to match radiohead).
@@ -589,6 +548,99 @@ class RFM9x:
         # Read RSSI register and convert to value using formula in datasheet.
         # Remember in LoRa mode the payload register changes function to RSSI!
         return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
+
+    @property
+    def signal_bandwidth(self):
+        """The signal bandwidth used by the radio (try setting to a higher
+        value to increase throughput or to a lower value to increase the
+        likelihood of successfully received payloads).  Valid values are
+        listed in RFM9x.bw_bins."""
+        bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf0) >> 4
+        if bw_id >= len(self.bw_bins):
+            return 500000
+        else:
+            return self.bw_bins[bw_id]
+
+    @signal_bandwidth.setter
+    def signal_bandwidth(self, val):
+        # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
+        for bw_id, cutoff in enumerate(self.bw_bins):
+            if val <= cutoff:
+                break
+        else:
+            bw_id = 9
+        self._write_u8(
+            _RH_RF95_REG_1D_MODEM_CONFIG1,
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bw_id << 4)
+        )
+
+    @property
+    def coding_rate(self):
+        """The coding rate used by the radio to control forward error
+        correction (try setting to a higher value to increase tolerance of
+        short bursts of interference or to a lower value to increase bit
+        rate).  Valid values are limited to 5, 6, 7, or 8."""
+        cr_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0e) >> 1
+        denominator = cr_id + 4
+        return denominator
+
+    @coding_rate.setter
+    def coding_rate(self, val):
+        # Set coding rate (set to 5 to match RadioHead Cr45).
+        denominator = min(max(val, 5), 8)
+        cr_id = denominator - 4
+        self._write_u8(
+            _RH_RF95_REG_1D_MODEM_CONFIG1,
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) | (cr_id << 1)
+        )
+
+    @property
+    def spreading_factor(self):
+        """The spreading factor used by the radio (try setting to a higher
+        value to increase the receiver's ability to distinguish signal from
+        noise or to a lower value to increase the data transmission rate).
+        Valid values are limited to 6, 7, 8, 9, 10, 11, or 12."""
+        sf_id = (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xf0) >> 4
+        return sf_id
+
+    @spreading_factor.setter
+    def spreading_factor(self, val):
+        # Set spreading factor (set to 7 to match RadioHead Sf128).
+        val = min(max(val, 6), 12)
+        self._write_u8(
+            _RH_RF95_DETECTION_OPTIMIZE, 0xc5 if val == 6 else 0xc3
+        )
+        self._write_u8(
+            _RH_RF95_DETECTION_THRESHOLD, 0x0c if val == 6 else 0x0a
+        )
+        self._write_u8(
+            _RH_RF95_REG_1E_MODEM_CONFIG2,
+            (
+                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) |
+                ((val << 4) & 0xf0)
+            )
+        )
+
+    @property
+    def enable_crc(self):
+        """Set to True to enable hardware CRC checking of incoming packets.
+        Incoming packets that fail the CRC check are not processed.  Set to
+        False to disable CRC checking and process all incoming packets."""
+        return (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x04) == 0x04
+
+    @enable_crc.setter
+    def enable_crc(self, val):
+        # Optionally enable CRC checking on incoming packets.
+        if val:
+            self._write_u8(
+                _RH_RF95_REG_1E_MODEM_CONFIG2,
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
+            )
+        else:
+            self._write_u8(
+                _RH_RF95_REG_1E_MODEM_CONFIG2,
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
+            )
 
     def send(self, data, timeout=2.,
              tx_header=(_RH_BROADCAST_ADDRESS, _RH_BROADCAST_ADDRESS, 0, 0)):
