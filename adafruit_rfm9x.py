@@ -557,9 +557,10 @@ class RFM9x:
         listed in RFM9x.bw_bins."""
         bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf0) >> 4
         if bw_id >= len(self.bw_bins):
-            return 500000
+            current_bandwidth = 500000
         else:
-            return self.bw_bins[bw_id]
+            current_bandwidth = self.bw_bins[bw_id]
+        return current_bandwidth
 
     @signal_bandwidth.setter
     def signal_bandwidth(self, val):
