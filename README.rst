@@ -71,7 +71,8 @@ the following example:
 
     # Initialze RFM radio with conservative baudrate and default modem config
     rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ, baudrate=1000000,
-                                 signal_bandwidth=125000, coding_rate=5, spreading_factor=7)
+                                 signal_bandwidth=125000, coding_rate=5, spreading_factor=7,
+                                 enable_crc=False)
 
 See examples/rfm9x_simpletest.py for an expanded demo of the usage.
 

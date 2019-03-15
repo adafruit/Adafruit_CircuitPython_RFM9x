@@ -337,7 +337,7 @@ class RFM9x:
 
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
                  high_power=True, baudrate=5000000, signal_bandwidth=125000,
-                 coding_rate=5, spreading_factor=7):
+                 coding_rate=5, spreading_factor=7, enable_crc=False):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
@@ -400,6 +400,10 @@ class RFM9x:
                 ((sf << 4) & 0xf0)
             )
         )
+        # Optionally enable CRC checking on incoming packets.
+        if enable_crc:
+            config = self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
+            self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, config)
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
         # Set preamble length (default 8 bytes to match radiohead).
