@@ -37,7 +37,7 @@ try:
     from warnings import warn
 except ImportError:
     def warn(msg, **kwargs):
-        # Issue a warning to stdout.
+        "Issue a warning to stdout."
         print("%s: %s" % ("Warning" if kwargs.get("cat") is None else kwargs["cat"].__name__, msg))
 
 import adafruit_bus_device.spi_device as spidev
