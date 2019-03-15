@@ -417,10 +417,15 @@ class RFM9x:
         )
         # Optionally enable CRC checking on incoming packets.
         if enable_crc:
-            config = self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
+            self._write_u8(
+                _RH_RF95_REG_1E_MODEM_CONFIG2,
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
+            )
         else:
-            config = self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
-        self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, config)
+            self._write_u8(
+                _RH_RF95_REG_1E_MODEM_CONFIG2,
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
+            )
         self.enable_crc = enable_crc
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
