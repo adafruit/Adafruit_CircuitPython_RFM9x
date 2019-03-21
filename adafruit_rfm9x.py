@@ -33,6 +33,13 @@ import time
 import digitalio
 from micropython import const
 
+try:
+    from warnings import warn
+except ImportError:
+    def warn(msg, **kwargs):
+        "Issue a warning to stdout."
+        print("%s: %s" % ("Warning" if kwargs.get("cat") is None else kwargs["cat"].__name__, msg))
+
 import adafruit_bus_device.spi_device as spidev
 
 
@@ -192,6 +199,8 @@ _RH_RF95_RX_PAYLOAD_CRC_ON                   = const(0x02)
 _RH_RF95_LOW_DATA_RATE_OPTIMIZE              = const(0x01)
 
 # RH_RF95_REG_1E_MODEM_CONFIG2                       0x1e
+_RH_RF95_DETECTION_OPTIMIZE                  = const(0x31)
+_RH_RF95_DETECTION_THRESHOLD                 = const(0x37)
 _RH_RF95_SPREADING_FACTOR                    = const(0xf0)
 _RH_RF95_SPREADING_FACTOR_64CPS              = const(0x60)
 _RH_RF95_SPREADING_FACTOR_128CPS             = const(0x70)
@@ -333,6 +342,10 @@ class RFM9x:
 
     rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
 
+    crc_error = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=5, bits=1)
+
+    bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
+
     def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
                  high_power=True, baudrate=5000000):
         self.high_power = high_power
@@ -367,10 +380,13 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
         # Set mode idle
         self.idle()
-        # Set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
+        # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
+        self.signal_bandwidth = 125000
+        self.coding_rate = 5
+        self.spreading_factor = 7
+        # Default to disable CRC checking on incoming packets.
+        self.enable_crc = False
         # Note no sync word is set for LoRa mode either!
-        self._write_u8(_RH_RF95_REG_1D_MODEM_CONFIG1, 0x72)  # Fei msb?
-        self._write_u8(_RH_RF95_REG_1E_MODEM_CONFIG2, 0x74)  # Fei lsb?
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
         # Set preamble length (default 8 bytes to match radiohead).
         self.preamble_length = preamble_length
@@ -533,6 +549,100 @@ class RFM9x:
         # Remember in LoRa mode the payload register changes function to RSSI!
         return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
 
+    @property
+    def signal_bandwidth(self):
+        """The signal bandwidth used by the radio (try setting to a higher
+        value to increase throughput or to a lower value to increase the
+        likelihood of successfully received payloads).  Valid values are
+        listed in RFM9x.bw_bins."""
+        bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf0) >> 4
+        if bw_id >= len(self.bw_bins):
+            current_bandwidth = 500000
+        else:
+            current_bandwidth = self.bw_bins[bw_id]
+        return current_bandwidth
+
+    @signal_bandwidth.setter
+    def signal_bandwidth(self, val):
+        # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
+        for bw_id, cutoff in enumerate(self.bw_bins):
+            if val <= cutoff:
+                break
+        else:
+            bw_id = 9
+        self._write_u8(
+            _RH_RF95_REG_1D_MODEM_CONFIG1,
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bw_id << 4)
+        )
+
+    @property
+    def coding_rate(self):
+        """The coding rate used by the radio to control forward error
+        correction (try setting to a higher value to increase tolerance of
+        short bursts of interference or to a lower value to increase bit
+        rate).  Valid values are limited to 5, 6, 7, or 8."""
+        cr_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0e) >> 1
+        denominator = cr_id + 4
+        return denominator
+
+    @coding_rate.setter
+    def coding_rate(self, val):
+        # Set coding rate (set to 5 to match RadioHead Cr45).
+        denominator = min(max(val, 5), 8)
+        cr_id = denominator - 4
+        self._write_u8(
+            _RH_RF95_REG_1D_MODEM_CONFIG1,
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) | (cr_id << 1)
+        )
+
+    @property
+    def spreading_factor(self):
+        """The spreading factor used by the radio (try setting to a higher
+        value to increase the receiver's ability to distinguish signal from
+        noise or to a lower value to increase the data transmission rate).
+        Valid values are limited to 6, 7, 8, 9, 10, 11, or 12."""
+        sf_id = (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xf0) >> 4
+        return sf_id
+
+    @spreading_factor.setter
+    def spreading_factor(self, val):
+        # Set spreading factor (set to 7 to match RadioHead Sf128).
+        val = min(max(val, 6), 12)
+        self._write_u8(
+            _RH_RF95_DETECTION_OPTIMIZE, 0xc5 if val == 6 else 0xc3
+        )
+        self._write_u8(
+            _RH_RF95_DETECTION_THRESHOLD, 0x0c if val == 6 else 0x0a
+        )
+        self._write_u8(
+            _RH_RF95_REG_1E_MODEM_CONFIG2,
+            (
+                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) |
+                ((val << 4) & 0xf0)
+            )
+        )
+
+    @property
+    def enable_crc(self):
+        """Set to True to enable hardware CRC checking of incoming packets.
+        Incoming packets that fail the CRC check are not processed.  Set to
+        False to disable CRC checking and process all incoming packets."""
+        return (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x04) == 0x04
+
+    @enable_crc.setter
+    def enable_crc(self, val):
+        # Optionally enable CRC checking on incoming packets.
+        if val:
+            self._write_u8(
+                _RH_RF95_REG_1E_MODEM_CONFIG2,
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
+            )
+        else:
+            self._write_u8(
+                _RH_RF95_REG_1E_MODEM_CONFIG2,
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
+            )
+
     def send(self, data, timeout=2.,
              tx_header=(_RH_BROADCAST_ADDRESS, _RH_BROADCAST_ADDRESS, 0, 0)):
         """Send a string of data using the transmitter.
@@ -617,25 +727,28 @@ class RFM9x:
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         if not timed_out:
-            # Grab the length of the received packet and check it has at least 5
-            # bytes to indicate the 4 byte header and at least 1 byte of user data.
-            length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
-            if length < 5:
-                packet = None
+            if self.enable_crc and self.crc_error:
+                warn("CRC error, packet ignored")
             else:
-                # Have a good packet, grab it from the FIFO.
-                # Reset the fifo read ptr to the beginning of the packet.
-                current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-                self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-                packet = bytearray(length)
-                # Read the packet.
-                self._read_into(_RH_RF95_REG_00_FIFO, packet)
-                if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
-                        and packet[0] != rx_filter):
+                # Grab the length of the received packet and check it has at least 5
+                # bytes to indicate the 4 byte header and at least 1 byte of user data.
+                length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+                if length < 5:
                     packet = None
-                elif not with_header:  # skip the header if not wanted
-                    packet = packet[4:]
-            # Listen again if necessary and return the result packet.
+                else:
+                    # Have a good packet, grab it from the FIFO.
+                    # Reset the fifo read ptr to the beginning of the packet.
+                    current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+                    self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+                    packet = bytearray(length)
+                    # Read the packet.
+                    self._read_into(_RH_RF95_REG_00_FIFO, packet)
+                    if (rx_filter != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
+                            and packet[0] != rx_filter):
+                        packet = None
+                    elif not with_header:  # skip the header if not wanted
+                        packet = packet[4:]
+        # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
         else:
