@@ -362,16 +362,17 @@ class RFM9x:
         self.reset()
         # No device type check!  Catch an error from the very first request and
         # throw a nicer message to indicate possible wiring problems.
-        try:
-            # Set sleep mode, wait 10s and confirm in sleep mode (basic device check).
-            # Also set long range mode (LoRa mode) as it can only be done in sleep.
-            self.sleep()
-            time.sleep(0.01)
-            self.long_range_mode = True
-            if self.operation_mode != SLEEP_MODE or not self.long_range_mode:
-                raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
-        except OSError:
-            raise RuntimeError('Failed to communicate with radio, check wiring!')
+        version = self._read_u8(_RH_RF95_REG_42_VERSION)
+        if version != 18:
+            raise RuntimeError('Failed to find rfm9x with expected version -- check wiring')
+
+        # Set sleep mode, wait 10s and confirm in sleep mode (basic device check).
+        # Also set long range mode (LoRa mode) as it can only be done in sleep.
+        self.sleep()
+        time.sleep(0.01)
+        self.long_range_mode = True
+        if self.operation_mode != SLEEP_MODE or not self.long_range_mode:
+            raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
         # clear default setting for access to LF registers if frequency > 525MHz
         if frequency > 525:
             self.low_frequency_mode = 0
@@ -496,7 +497,8 @@ class RFM9x:
 
     @frequency_mhz.setter
     def frequency_mhz(self, val):
-        assert 240 <= val <= 960
+        if val < 240 or val > 960:
+            raise RuntimeError('frequency_mhz must be between 240 and 960')
         # Calculate FRF register 24-bit value.
         frf = int((val * 1000000.0) / _RH_RF95_FSTEP) & 0xFFFFFF
         # Extract byte values and update registers.
@@ -526,7 +528,8 @@ class RFM9x:
     def tx_power(self, val):
         val = int(val)
         if self.high_power:
-            assert 5 <= val <= 23
+            if val < 5 or val > 23:
+                raise RuntimeError('tx_power must be between 5 and 23')
             # Enable power amp DAC if power is above 20 dB.
             # Lower setting by 3db when PA_BOOST enabled - see Data Sheet  Section 6.4
             if val > 20:
