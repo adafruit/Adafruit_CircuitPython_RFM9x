@@ -44,7 +44,7 @@ import adafruit_bus_device.spi_device as spidev
 
 
 __version__ = "0.0.0-auto.0"
-__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_rfm95.git"
+__repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x.git"
 
 
 # pylint: disable=bad-whitespace
