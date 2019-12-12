@@ -68,6 +68,5 @@ print('Waiting for packets...')
 while True:
     time.sleep(.1)
     if packet_received:
-        rfm9x.send(bytes("back at you\r\n","utf-8"), keep_listening = True)
         print('received message!')
         packet_received = False
