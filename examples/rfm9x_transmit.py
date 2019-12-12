@@ -7,6 +7,7 @@ import busio
 import digitalio
 import adafruit_rfm9x
 
+# set the time interval (seconds) for sending packets
 transmit_interval=10
 
 # Define radio parameters.

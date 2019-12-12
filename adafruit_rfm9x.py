@@ -655,11 +655,13 @@ class RFM9x:
            The tx_header defaults to using the Broadcast addresses. It may be overidden
            by specifying a 4-tuple of bytes containing (To,From,ID,Flags)
            The timeout is just to prevent a hang (arbitrarily set to 2 seconds)
+           The keep_listening argument should be set to True if you want to start listening
+           automatically after the packet is sent. The default setting is False.
         """
         # Disable pylint warning to not use length as a check for zero.
         # This is a puzzling warning as the below code is clearly the most
         # efficient and proper way to ensure a precondition that the provided
-        # buffer be within an expected range of bounds.  Disable this check.
+        # buffer be within an expected range of bounds. Disable this check.
         # pylint: disable=len-as-condition
         assert 0 < len(data) <= 252
         assert len(tx_header) == 4, "tx header must be 4-tuple (To,From,ID,Flags)"
@@ -703,7 +705,7 @@ class RFM9x:
         """Wait to receive a packet from the receiver. Will wait for up to timeout_s amount of
            seconds for a packet to be received and decoded. If a packet is found the payload bytes
            are returned, otherwise None is returned (which indicates the timeout elapsed with no
-           reception).  If timeout is None it isnot used ( for use with interrupts)
+           reception).  If timeout is None it is not used ( for use with interrupts)
            If keep_listening is True (the default) the chip will immediately enter listening mode
            after reception of a packet, otherwise it will fall back to idle mode and ignore any
            future reception.

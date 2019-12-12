@@ -1,5 +1,8 @@
-# Simple demo of sending and recieving data with the RFM95 LoRa radio.
-# Author: Tony DiCola
+# Example using Interrupts to send a message and then wait indefinitely for messages
+# to be received. Interrupts are used only for receive. sending is done with polling.
+# This example is for systems that support interrupts like the Raspberry Pi with "blinka"
+# CircuitPython does not support interrupts so it will not work on  Circutpython boards
+# Author: Tony DiCola, Jerry Needell
 import time
 import board
 import busio
