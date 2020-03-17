@@ -8,14 +8,14 @@ import digitalio
 import adafruit_rfm9x
 
 # set the time interval (seconds) for sending packets
-transmit_interval=10
+transmit_interval = 10
 
 # Define radio parameters.
-RADIO_FREQ_MHZ   = 915.0  # Frequency of the radio in Mhz. Must match your
-                          # module! Can be a value like 915.0, 433.0, etc.
+RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
+# module! Can be a value like 915.0, 433.0, etc.
 
 # Define pins connected to the chip.
-CS    = digitalio.DigitalInOut(board.CE1)
+CS = digitalio.DigitalInOut(board.CE1)
 RESET = digitalio.DigitalInOut(board.D25)
 
 # Initialize SPI bus.
@@ -34,14 +34,14 @@ rfm9x.tx_power = 23
 
 # initialize counter
 counter = 0
-#send a broadcast mesage
-rfm9x.send(bytes("message number {}".format(counter),"UTF-8"))
+# send a broadcast mesage
+rfm9x.send(bytes("message number {}".format(counter), "UTF-8"))
 
 # Wait to receive packets.
-print('Waiting for packets...')
-#initialize flag and timer
-send_reading=False
-time_now=time.monotonic()
+print("Waiting for packets...")
+# initialize flag and timer
+send_reading = False
+time_now = time.monotonic()
 while True:
     # Look for a new packet - wait up to 5 seconds:
     packet = rfm9x.receive(timeout=5.0)
@@ -49,12 +49,12 @@ while True:
     if packet is not None:
         # Received a packet!
         # Print out the raw bytes of the packet:
-        print('Received (raw bytes): {0}'.format(packet))
+        print("Received (raw bytes): {0}".format(packet))
         # send reading after any packet received
-    if time.monotonic()-time_now>transmit_interval:
-        #reset timeer
-        time_now=time.monotonic()
-        #clear flag to send data
-        send_reading=False
+    if time.monotonic() - time_now > transmit_interval:
+        # reset timeer
+        time_now = time.monotonic()
+        # clear flag to send data
+        send_reading = False
         counter = counter + 1
-        rfm9x.send(bytes("message number {}".format(counter),"UTF-8"))
+        rfm9x.send(bytes("message number {}".format(counter), "UTF-8"))
