@@ -41,7 +41,7 @@ source_suffix = ".rst"
 master_doc = "index"
 
 # General information about the project.
-project = "Adafruit rfm9x Library"
+project = "Adafruit RFM9x Library"
 copyright = "2018 Tony DiCola"
 author = "Tony DiCola"
 
@@ -142,8 +142,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "Adafruitrfm9xLibrary.tex",
-        "Adafruitrfm9x Library Documentation",
+        "AdafruitRFM9xLibrary.tex",
+        "Adafruit RFM9x Library Documentation",
         author,
         "manual",
     ),
@@ -156,8 +156,8 @@ latex_documents = [
 man_pages = [
     (
         master_doc,
-        "Adafruitrfm9xlibrary",
-        "Adafruit rfm9x Library Documentation",
+        "AdafruitRFM9xlibrary",
+        "Adafruit RFM9x Library Documentation",
         [author],
         1,
     )
@@ -171,10 +171,10 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "Adafruitrfm9xLibrary",
-        "Adafruit rfm9x Library Documentation",
+        "AdafruitRFM9xLibrary",
+        "Adafruit RFM9x Library Documentation",
         author,
-        "Adafruitrfm9xLibrary",
+        "AdafruitRFM9xLibrary",
         "One line description of project.",
         "Miscellaneous",
     ),
