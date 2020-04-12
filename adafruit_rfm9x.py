@@ -37,9 +37,14 @@ from micropython import const
 try:
     from warnings import warn
 except ImportError:
+
     def warn(msg, **kwargs):
         "Issue a warning to stdout."
-        print("%s: %s" % ("Warning" if kwargs.get("cat") is None else kwargs["cat"].__name__, msg))
+        print(
+            "%s: %s"
+            % ("Warning" if kwargs.get("cat") is None else kwargs["cat"].__name__, msg)
+        )
+
 
 import adafruit_bus_device.spi_device as spidev
 
@@ -51,178 +56,178 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x.git"
 # pylint: disable=bad-whitespace
 # Internal constants:
 # Register names (FSK Mode even though we use LoRa instead, from table 85)
-_RH_RF95_REG_00_FIFO                              = const(0x00)
-_RH_RF95_REG_01_OP_MODE                           = const(0x01)
-_RH_RF95_REG_02_RESERVED                          = const(0x02)
-_RH_RF95_REG_03_RESERVED                          = const(0x03)
-_RH_RF95_REG_04_RESERVED                          = const(0x04)
-_RH_RF95_REG_05_RESERVED                          = const(0x05)
-_RH_RF95_REG_06_FRF_MSB                           = const(0x06)
-_RH_RF95_REG_07_FRF_MID                           = const(0x07)
-_RH_RF95_REG_08_FRF_LSB                           = const(0x08)
-_RH_RF95_REG_09_PA_CONFIG                         = const(0x09)
-_RH_RF95_REG_0A_PA_RAMP                           = const(0x0a)
-_RH_RF95_REG_0B_OCP                               = const(0x0b)
-_RH_RF95_REG_0C_LNA                               = const(0x0c)
-_RH_RF95_REG_0D_FIFO_ADDR_PTR                     = const(0x0d)
-_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR                 = const(0x0e)
-_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR                 = const(0x0f)
-_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR              = const(0x10)
-_RH_RF95_REG_11_IRQ_FLAGS_MASK                    = const(0x11)
-_RH_RF95_REG_12_IRQ_FLAGS                         = const(0x12)
-_RH_RF95_REG_13_RX_NB_BYTES                       = const(0x13)
-_RH_RF95_REG_14_RX_HEADER_CNT_VALUE_MSB           = const(0x14)
-_RH_RF95_REG_15_RX_HEADER_CNT_VALUE_LSB           = const(0x15)
-_RH_RF95_REG_16_RX_PACKET_CNT_VALUE_MSB           = const(0x16)
-_RH_RF95_REG_17_RX_PACKET_CNT_VALUE_LSB           = const(0x17)
-_RH_RF95_REG_18_MODEM_STAT                        = const(0x18)
-_RH_RF95_REG_19_PKT_SNR_VALUE                     = const(0x19)
-_RH_RF95_REG_1A_PKT_RSSI_VALUE                    = const(0x1a)
-_RH_RF95_REG_1B_RSSI_VALUE                        = const(0x1b)
-_RH_RF95_REG_1C_HOP_CHANNEL                       = const(0x1c)
-_RH_RF95_REG_1D_MODEM_CONFIG1                     = const(0x1d)
-_RH_RF95_REG_1E_MODEM_CONFIG2                     = const(0x1e)
-_RH_RF95_REG_1F_SYMB_TIMEOUT_LSB                  = const(0x1f)
-_RH_RF95_REG_20_PREAMBLE_MSB                      = const(0x20)
-_RH_RF95_REG_21_PREAMBLE_LSB                      = const(0x21)
-_RH_RF95_REG_22_PAYLOAD_LENGTH                    = const(0x22)
-_RH_RF95_REG_23_MAX_PAYLOAD_LENGTH                = const(0x23)
-_RH_RF95_REG_24_HOP_PERIOD                        = const(0x24)
-_RH_RF95_REG_25_FIFO_RX_BYTE_ADDR                 = const(0x25)
-_RH_RF95_REG_26_MODEM_CONFIG3                     = const(0x26)
+_RH_RF95_REG_00_FIFO = const(0x00)
+_RH_RF95_REG_01_OP_MODE = const(0x01)
+_RH_RF95_REG_02_RESERVED = const(0x02)
+_RH_RF95_REG_03_RESERVED = const(0x03)
+_RH_RF95_REG_04_RESERVED = const(0x04)
+_RH_RF95_REG_05_RESERVED = const(0x05)
+_RH_RF95_REG_06_FRF_MSB = const(0x06)
+_RH_RF95_REG_07_FRF_MID = const(0x07)
+_RH_RF95_REG_08_FRF_LSB = const(0x08)
+_RH_RF95_REG_09_PA_CONFIG = const(0x09)
+_RH_RF95_REG_0A_PA_RAMP = const(0x0A)
+_RH_RF95_REG_0B_OCP = const(0x0B)
+_RH_RF95_REG_0C_LNA = const(0x0C)
+_RH_RF95_REG_0D_FIFO_ADDR_PTR = const(0x0D)
+_RH_RF95_REG_0E_FIFO_TX_BASE_ADDR = const(0x0E)
+_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR = const(0x0F)
+_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR = const(0x10)
+_RH_RF95_REG_11_IRQ_FLAGS_MASK = const(0x11)
+_RH_RF95_REG_12_IRQ_FLAGS = const(0x12)
+_RH_RF95_REG_13_RX_NB_BYTES = const(0x13)
+_RH_RF95_REG_14_RX_HEADER_CNT_VALUE_MSB = const(0x14)
+_RH_RF95_REG_15_RX_HEADER_CNT_VALUE_LSB = const(0x15)
+_RH_RF95_REG_16_RX_PACKET_CNT_VALUE_MSB = const(0x16)
+_RH_RF95_REG_17_RX_PACKET_CNT_VALUE_LSB = const(0x17)
+_RH_RF95_REG_18_MODEM_STAT = const(0x18)
+_RH_RF95_REG_19_PKT_SNR_VALUE = const(0x19)
+_RH_RF95_REG_1A_PKT_RSSI_VALUE = const(0x1A)
+_RH_RF95_REG_1B_RSSI_VALUE = const(0x1B)
+_RH_RF95_REG_1C_HOP_CHANNEL = const(0x1C)
+_RH_RF95_REG_1D_MODEM_CONFIG1 = const(0x1D)
+_RH_RF95_REG_1E_MODEM_CONFIG2 = const(0x1E)
+_RH_RF95_REG_1F_SYMB_TIMEOUT_LSB = const(0x1F)
+_RH_RF95_REG_20_PREAMBLE_MSB = const(0x20)
+_RH_RF95_REG_21_PREAMBLE_LSB = const(0x21)
+_RH_RF95_REG_22_PAYLOAD_LENGTH = const(0x22)
+_RH_RF95_REG_23_MAX_PAYLOAD_LENGTH = const(0x23)
+_RH_RF95_REG_24_HOP_PERIOD = const(0x24)
+_RH_RF95_REG_25_FIFO_RX_BYTE_ADDR = const(0x25)
+_RH_RF95_REG_26_MODEM_CONFIG3 = const(0x26)
 
-_RH_RF95_REG_40_DIO_MAPPING1                      = const(0x40)
-_RH_RF95_REG_41_DIO_MAPPING2                      = const(0x41)
-_RH_RF95_REG_42_VERSION                           = const(0x42)
+_RH_RF95_REG_40_DIO_MAPPING1 = const(0x40)
+_RH_RF95_REG_41_DIO_MAPPING2 = const(0x41)
+_RH_RF95_REG_42_VERSION = const(0x42)
 
-_RH_RF95_REG_4B_TCXO                              = const(0x4b)
-_RH_RF95_REG_4D_PA_DAC                            = const(0x4d)
-_RH_RF95_REG_5B_FORMER_TEMP                       = const(0x5b)
-_RH_RF95_REG_61_AGC_REF                           = const(0x61)
-_RH_RF95_REG_62_AGC_THRESH1                       = const(0x62)
-_RH_RF95_REG_63_AGC_THRESH2                       = const(0x63)
-_RH_RF95_REG_64_AGC_THRESH3                       = const(0x64)
+_RH_RF95_REG_4B_TCXO = const(0x4B)
+_RH_RF95_REG_4D_PA_DAC = const(0x4D)
+_RH_RF95_REG_5B_FORMER_TEMP = const(0x5B)
+_RH_RF95_REG_61_AGC_REF = const(0x61)
+_RH_RF95_REG_62_AGC_THRESH1 = const(0x62)
+_RH_RF95_REG_63_AGC_THRESH2 = const(0x63)
+_RH_RF95_REG_64_AGC_THRESH3 = const(0x64)
 
 # RH_RF95_REG_01_OP_MODE                             0x01
-_RH_RF95_LONG_RANGE_MODE                     = const(0x80)
-_RH_RF95_ACCESS_SHARED_REG                   = const(0x40)
-_RH_RF95_MODE                                = const(0x07)
-_RH_RF95_MODE_SLEEP                          = const(0x00)
-_RH_RF95_MODE_STDBY                          = const(0x01)
-_RH_RF95_MODE_FSTX                           = const(0x02)
-_RH_RF95_MODE_TX                             = const(0x03)
-_RH_RF95_MODE_FSRX                           = const(0x04)
-_RH_RF95_MODE_RXCONTINUOUS                   = const(0x05)
-_RH_RF95_MODE_RXSINGLE                       = const(0x06)
-_RH_RF95_MODE_CAD                            = const(0x07)
+_RH_RF95_LONG_RANGE_MODE = const(0x80)
+_RH_RF95_ACCESS_SHARED_REG = const(0x40)
+_RH_RF95_MODE = const(0x07)
+_RH_RF95_MODE_SLEEP = const(0x00)
+_RH_RF95_MODE_STDBY = const(0x01)
+_RH_RF95_MODE_FSTX = const(0x02)
+_RH_RF95_MODE_TX = const(0x03)
+_RH_RF95_MODE_FSRX = const(0x04)
+_RH_RF95_MODE_RXCONTINUOUS = const(0x05)
+_RH_RF95_MODE_RXSINGLE = const(0x06)
+_RH_RF95_MODE_CAD = const(0x07)
 
 # RH_RF95_REG_09_PA_CONFIG                           0x09
-_RH_RF95_PA_SELECT                           = const(0x80)
-_RH_RF95_MAX_POWER                           = const(0x70)
-_RH_RF95_OUTPUT_POWER                        = const(0x0f)
+_RH_RF95_PA_SELECT = const(0x80)
+_RH_RF95_MAX_POWER = const(0x70)
+_RH_RF95_OUTPUT_POWER = const(0x0F)
 
 # RH_RF95_REG_0A_PA_RAMP                             0x0a
-_RH_RF95_LOW_PN_TX_PLL_OFF                   = const(0x10)
-_RH_RF95_PA_RAMP                             = const(0x0f)
-_RH_RF95_PA_RAMP_3_4MS                       = const(0x00)
-_RH_RF95_PA_RAMP_2MS                         = const(0x01)
-_RH_RF95_PA_RAMP_1MS                         = const(0x02)
-_RH_RF95_PA_RAMP_500US                       = const(0x03)
-_RH_RF95_PA_RAMP_250US                       = const(0x04)
-_RH_RF95_PA_RAMP_125US                       = const(0x05)
-_RH_RF95_PA_RAMP_100US                       = const(0x06)
-_RH_RF95_PA_RAMP_62US                        = const(0x07)
-_RH_RF95_PA_RAMP_50US                        = const(0x08)
-_RH_RF95_PA_RAMP_40US                        = const(0x09)
-_RH_RF95_PA_RAMP_31US                        = const(0x0a)
-_RH_RF95_PA_RAMP_25US                        = const(0x0b)
-_RH_RF95_PA_RAMP_20US                        = const(0x0c)
-_RH_RF95_PA_RAMP_15US                        = const(0x0d)
-_RH_RF95_PA_RAMP_12US                        = const(0x0e)
-_RH_RF95_PA_RAMP_10US                        = const(0x0f)
+_RH_RF95_LOW_PN_TX_PLL_OFF = const(0x10)
+_RH_RF95_PA_RAMP = const(0x0F)
+_RH_RF95_PA_RAMP_3_4MS = const(0x00)
+_RH_RF95_PA_RAMP_2MS = const(0x01)
+_RH_RF95_PA_RAMP_1MS = const(0x02)
+_RH_RF95_PA_RAMP_500US = const(0x03)
+_RH_RF95_PA_RAMP_250US = const(0x04)
+_RH_RF95_PA_RAMP_125US = const(0x05)
+_RH_RF95_PA_RAMP_100US = const(0x06)
+_RH_RF95_PA_RAMP_62US = const(0x07)
+_RH_RF95_PA_RAMP_50US = const(0x08)
+_RH_RF95_PA_RAMP_40US = const(0x09)
+_RH_RF95_PA_RAMP_31US = const(0x0A)
+_RH_RF95_PA_RAMP_25US = const(0x0B)
+_RH_RF95_PA_RAMP_20US = const(0x0C)
+_RH_RF95_PA_RAMP_15US = const(0x0D)
+_RH_RF95_PA_RAMP_12US = const(0x0E)
+_RH_RF95_PA_RAMP_10US = const(0x0F)
 
 # RH_RF95_REG_0B_OCP                                 0x0b
-_RH_RF95_OCP_ON                              = const(0x20)
-_RH_RF95_OCP_TRIM                            = const(0x1f)
+_RH_RF95_OCP_ON = const(0x20)
+_RH_RF95_OCP_TRIM = const(0x1F)
 
 # RH_RF95_REG_0C_LNA                                 0x0c
-_RH_RF95_LNA_GAIN                            = const(0xe0)
-_RH_RF95_LNA_BOOST                           = const(0x03)
-_RH_RF95_LNA_BOOST_DEFAULT                   = const(0x00)
-_RH_RF95_LNA_BOOST_150PC                     = const(0x11)
+_RH_RF95_LNA_GAIN = const(0xE0)
+_RH_RF95_LNA_BOOST = const(0x03)
+_RH_RF95_LNA_BOOST_DEFAULT = const(0x00)
+_RH_RF95_LNA_BOOST_150PC = const(0x11)
 
 # RH_RF95_REG_11_IRQ_FLAGS_MASK                      0x11
-_RH_RF95_RX_TIMEOUT_MASK                     = const(0x80)
-_RH_RF95_RX_DONE_MASK                        = const(0x40)
-_RH_RF95_PAYLOAD_CRC_ERROR_MASK              = const(0x20)
-_RH_RF95_VALID_HEADER_MASK                   = const(0x10)
-_RH_RF95_TX_DONE_MASK                        = const(0x08)
-_RH_RF95_CAD_DONE_MASK                       = const(0x04)
-_RH_RF95_FHSS_CHANGE_CHANNEL_MASK            = const(0x02)
-_RH_RF95_CAD_DETECTED_MASK                   = const(0x01)
+_RH_RF95_RX_TIMEOUT_MASK = const(0x80)
+_RH_RF95_RX_DONE_MASK = const(0x40)
+_RH_RF95_PAYLOAD_CRC_ERROR_MASK = const(0x20)
+_RH_RF95_VALID_HEADER_MASK = const(0x10)
+_RH_RF95_TX_DONE_MASK = const(0x08)
+_RH_RF95_CAD_DONE_MASK = const(0x04)
+_RH_RF95_FHSS_CHANGE_CHANNEL_MASK = const(0x02)
+_RH_RF95_CAD_DETECTED_MASK = const(0x01)
 
 # RH_RF95_REG_12_IRQ_FLAGS                           0x12
-_RH_RF95_RX_TIMEOUT                          = const(0x80)
-_RH_RF95_RX_DONE                             = const(0x40)
-_RH_RF95_PAYLOAD_CRC_ERROR                   = const(0x20)
-_RH_RF95_VALID_HEADER                        = const(0x10)
-_RH_RF95_TX_DONE                             = const(0x08)
-_RH_RF95_CAD_DONE                            = const(0x04)
-_RH_RF95_FHSS_CHANGE_CHANNEL                 = const(0x02)
-_RH_RF95_CAD_DETECTED                        = const(0x01)
+_RH_RF95_RX_TIMEOUT = const(0x80)
+_RH_RF95_RX_DONE = const(0x40)
+_RH_RF95_PAYLOAD_CRC_ERROR = const(0x20)
+_RH_RF95_VALID_HEADER = const(0x10)
+_RH_RF95_TX_DONE = const(0x08)
+_RH_RF95_CAD_DONE = const(0x04)
+_RH_RF95_FHSS_CHANGE_CHANNEL = const(0x02)
+_RH_RF95_CAD_DETECTED = const(0x01)
 
 # RH_RF95_REG_18_MODEM_STAT                          0x18
-_RH_RF95_RX_CODING_RATE                      = const(0xe0)
-_RH_RF95_MODEM_STATUS_CLEAR                  = const(0x10)
-_RH_RF95_MODEM_STATUS_HEADER_INFO_VALID      = const(0x08)
-_RH_RF95_MODEM_STATUS_RX_ONGOING             = const(0x04)
-_RH_RF95_MODEM_STATUS_SIGNAL_SYNCHRONIZED    = const(0x02)
-_RH_RF95_MODEM_STATUS_SIGNAL_DETECTED        = const(0x01)
+_RH_RF95_RX_CODING_RATE = const(0xE0)
+_RH_RF95_MODEM_STATUS_CLEAR = const(0x10)
+_RH_RF95_MODEM_STATUS_HEADER_INFO_VALID = const(0x08)
+_RH_RF95_MODEM_STATUS_RX_ONGOING = const(0x04)
+_RH_RF95_MODEM_STATUS_SIGNAL_SYNCHRONIZED = const(0x02)
+_RH_RF95_MODEM_STATUS_SIGNAL_DETECTED = const(0x01)
 
 # RH_RF95_REG_1C_HOP_CHANNEL                         0x1c
-_RH_RF95_PLL_TIMEOUT                         = const(0x80)
-_RH_RF95_RX_PAYLOAD_CRC_IS_ON                = const(0x40)
-_RH_RF95_FHSS_PRESENT_CHANNEL                = const(0x3f)
+_RH_RF95_PLL_TIMEOUT = const(0x80)
+_RH_RF95_RX_PAYLOAD_CRC_IS_ON = const(0x40)
+_RH_RF95_FHSS_PRESENT_CHANNEL = const(0x3F)
 
 # RH_RF95_REG_1D_MODEM_CONFIG1                       0x1d
-_RH_RF95_BW                                  = const(0xc0)
-_RH_RF95_BW_125KHZ                           = const(0x00)
-_RH_RF95_BW_250KHZ                           = const(0x40)
-_RH_RF95_BW_500KHZ                           = const(0x80)
-_RH_RF95_BW_RESERVED                         = const(0xc0)
-_RH_RF95_CODING_RATE                         = const(0x38)
-_RH_RF95_CODING_RATE_4_5                     = const(0x00)
-_RH_RF95_CODING_RATE_4_6                     = const(0x08)
-_RH_RF95_CODING_RATE_4_7                     = const(0x10)
-_RH_RF95_CODING_RATE_4_8                     = const(0x18)
-_RH_RF95_IMPLICIT_HEADER_MODE_ON             = const(0x04)
-_RH_RF95_RX_PAYLOAD_CRC_ON                   = const(0x02)
-_RH_RF95_LOW_DATA_RATE_OPTIMIZE              = const(0x01)
+_RH_RF95_BW = const(0xC0)
+_RH_RF95_BW_125KHZ = const(0x00)
+_RH_RF95_BW_250KHZ = const(0x40)
+_RH_RF95_BW_500KHZ = const(0x80)
+_RH_RF95_BW_RESERVED = const(0xC0)
+_RH_RF95_CODING_RATE = const(0x38)
+_RH_RF95_CODING_RATE_4_5 = const(0x00)
+_RH_RF95_CODING_RATE_4_6 = const(0x08)
+_RH_RF95_CODING_RATE_4_7 = const(0x10)
+_RH_RF95_CODING_RATE_4_8 = const(0x18)
+_RH_RF95_IMPLICIT_HEADER_MODE_ON = const(0x04)
+_RH_RF95_RX_PAYLOAD_CRC_ON = const(0x02)
+_RH_RF95_LOW_DATA_RATE_OPTIMIZE = const(0x01)
 
 # RH_RF95_REG_1E_MODEM_CONFIG2                       0x1e
-_RH_RF95_DETECTION_OPTIMIZE                  = const(0x31)
-_RH_RF95_DETECTION_THRESHOLD                 = const(0x37)
-_RH_RF95_SPREADING_FACTOR                    = const(0xf0)
-_RH_RF95_SPREADING_FACTOR_64CPS              = const(0x60)
-_RH_RF95_SPREADING_FACTOR_128CPS             = const(0x70)
-_RH_RF95_SPREADING_FACTOR_256CPS             = const(0x80)
-_RH_RF95_SPREADING_FACTOR_512CPS             = const(0x90)
-_RH_RF95_SPREADING_FACTOR_1024CPS            = const(0xa0)
-_RH_RF95_SPREADING_FACTOR_2048CPS            = const(0xb0)
-_RH_RF95_SPREADING_FACTOR_4096CPS            = const(0xc0)
-_RH_RF95_TX_CONTINUOUS_MOE                   = const(0x08)
-_RH_RF95_AGC_AUTO_ON                         = const(0x04)
-_RH_RF95_SYM_TIMEOUT_MSB                     = const(0x03)
+_RH_RF95_DETECTION_OPTIMIZE = const(0x31)
+_RH_RF95_DETECTION_THRESHOLD = const(0x37)
+_RH_RF95_SPREADING_FACTOR = const(0xF0)
+_RH_RF95_SPREADING_FACTOR_64CPS = const(0x60)
+_RH_RF95_SPREADING_FACTOR_128CPS = const(0x70)
+_RH_RF95_SPREADING_FACTOR_256CPS = const(0x80)
+_RH_RF95_SPREADING_FACTOR_512CPS = const(0x90)
+_RH_RF95_SPREADING_FACTOR_1024CPS = const(0xA0)
+_RH_RF95_SPREADING_FACTOR_2048CPS = const(0xB0)
+_RH_RF95_SPREADING_FACTOR_4096CPS = const(0xC0)
+_RH_RF95_TX_CONTINUOUS_MOE = const(0x08)
+_RH_RF95_AGC_AUTO_ON = const(0x04)
+_RH_RF95_SYM_TIMEOUT_MSB = const(0x03)
 
 # RH_RF95_REG_4D_PA_DAC                              0x4d
-_RH_RF95_PA_DAC_DISABLE                      = const(0x04)
-_RH_RF95_PA_DAC_ENABLE                       = const(0x07)
+_RH_RF95_PA_DAC_DISABLE = const(0x04)
+_RH_RF95_PA_DAC_ENABLE = const(0x07)
 
 # The crystal oscillator frequency of the module
 _RH_RF95_FXOSC = 32000000.0
 
 # The Frequency Synthesizer step = RH_RF95_FXOSC / 2^^19
-_RH_RF95_FSTEP = (_RH_RF95_FXOSC / 524288)
+_RH_RF95_FSTEP = _RH_RF95_FXOSC / 524288
 
 # RadioHead specific compatibility constants.
 _RH_BROADCAST_ADDRESS = const(0xFF)
@@ -234,12 +239,12 @@ _RH_FLAGS_ACK = const(0x80)
 _RH_FLAGS_RETRY = const(0x40)
 
 # User facing constants:
-SLEEP_MODE   = 0b000
+SLEEP_MODE = 0b000
 STANDBY_MODE = 0b001
-FS_TX_MODE   = 0b010
-TX_MODE      = 0b011
-FS_RX_MODE   = 0b100
-RX_MODE      = 0b101
+FS_TX_MODE = 0b010
+TX_MODE = 0b011
+FS_RX_MODE = 0b100
+RX_MODE = 0b101
 # pylint: enable=bad-whitespace
 
 
@@ -248,6 +253,7 @@ RX_MODE      = 0b101
 # is a complex chip which requires exposing many attributes and state.  Disable
 # the warning to work around the error.
 # pylint: disable=too-many-instance-attributes
+
 
 class RFM9x:
     """Interface to a RFM95/6/7/8 LoRa radio module.  Allows sending and
@@ -350,13 +356,21 @@ class RFM9x:
 
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
-    def __init__(self, spi, cs, reset, frequency, *, preamble_length=8,
-                 high_power=True, baudrate=5000000):
+    def __init__(
+        self,
+        spi,
+        cs,
+        reset,
+        frequency,
+        *,
+        preamble_length=8,
+        high_power=True,
+        baudrate=5000000
+    ):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
-        self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate,
-                                        polarity=0, phase=0)
+        self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital input (default state for reset line according
         # to the datasheet).  This line is pulled low as an output quickly to
         # trigger a reset.  Note that reset MUST be done like this and set as
@@ -368,7 +382,9 @@ class RFM9x:
         # throw a nicer message to indicate possible wiring problems.
         version = self._read_u8(_RH_RF95_REG_42_VERSION)
         if version != 18:
-            raise RuntimeError('Failed to find rfm9x with expected version -- check wiring')
+            raise RuntimeError(
+                "Failed to find rfm9x with expected version -- check wiring"
+            )
 
         # Set sleep mode, wait 10s and confirm in sleep mode (basic device check).
         # Also set long range mode (LoRa mode) as it can only be done in sleep.
@@ -376,7 +392,7 @@ class RFM9x:
         time.sleep(0.01)
         self.long_range_mode = True
         if self.operation_mode != SLEEP_MODE or not self.long_range_mode:
-            raise RuntimeError('Failed to configure radio for LoRa mode, check wiring!')
+            raise RuntimeError("Failed to configure radio for LoRa mode, check wiring!")
         # clear default setting for access to LF registers if frequency > 525MHz
         if frequency > 525:
             self.low_frequency_mode = 0
@@ -399,27 +415,27 @@ class RFM9x:
         self.frequency_mhz = frequency
         # Set TX power to low defaut, 13 dB.
         self.tx_power = 13
-        #initialize timeouts and delays delays
-        self.ack_wait = .5
-        self.receive_timeout = .5
-        self.xmit_timeout = 2.
+        # initialize timeouts and delays delays
+        self.ack_wait = 0.5
+        self.receive_timeout = 0.5
+        self.xmit_timeout = 2.0
         self.ack_retries = 5
         self.ack_delay = None
-        #initialize sequence number counter for reliabe datagram mode
+        # initialize sequence number counter for reliabe datagram mode
         self.sequence_number = 0
-        #create seen Ids list
+        # create seen Ids list
         self.seen_ids = bytearray(256)
-        #initialize packet header
-        #node address - default is broadcast
+        # initialize packet header
+        # node address - default is broadcast
         self.node = _RH_BROADCAST_ADDRESS
-        #destination address - default is broadcast
+        # destination address - default is broadcast
         self.destination = _RH_BROADCAST_ADDRESS
-        #ID - contains seq count for reliable datagram mode
+        # ID - contains seq count for reliable datagram mode
         self.identifier = 0
-        #flags - identifies ack/reetry packet for reliable datagram mode
+        # flags - identifies ack/reetry packet for reliable datagram mode
         self.flags = 0
-        #initialize last RSSI reading
-        self.last_rssi = 0.
+        # initialize last RSSI reading
+        self.last_rssi = 0.0
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
@@ -431,7 +447,7 @@ class RFM9x:
             length = len(buf)
         with self._device as device:
             self._BUFFER[0] = address & 0x7F  # Strip out top bit to set 0
-                                              # value (read).
+            # value (read).
             device.write(self._BUFFER, end=1)
             device.readinto(buf, end=length)
 
@@ -448,7 +464,7 @@ class RFM9x:
             length = len(buf)
         with self._device as device:
             self._BUFFER[0] = (address | 0x80) & 0xFF  # Set top bit to 1 to
-                                                       # indicate a write.
+            # indicate a write.
             device.write(self._BUFFER, end=1)
             device.write(buf, end=length)
 
@@ -457,7 +473,7 @@ class RFM9x:
         # 8-bit value to write to that address.
         with self._device as device:
             self._BUFFER[0] = (address | 0x80) & 0xFF  # Set top bit to 1 to
-                                                       # indicate a write.
+            # indicate a write.
             self._BUFFER[1] = val & 0xFF
             device.write(self._BUFFER, end=2)
 
@@ -467,7 +483,7 @@ class RFM9x:
         self._reset.switch_to_output(value=False)
         time.sleep(0.0001)  # 100 us
         self._reset.switch_to_input(pull=digitalio.Pull.UP)
-        time.sleep(0.005)   # 5 ms
+        time.sleep(0.005)  # 5 ms
 
     def idle(self):
         """Enter idle standby mode."""
@@ -523,7 +539,7 @@ class RFM9x:
     @frequency_mhz.setter
     def frequency_mhz(self, val):
         if val < 240 or val > 960:
-            raise RuntimeError('frequency_mhz must be between 240 and 960')
+            raise RuntimeError("frequency_mhz must be between 240 and 960")
         # Calculate FRF register 24-bit value.
         frf = int((val * 1000000.0) / _RH_RF95_FSTEP) & 0xFFFFFF
         # Extract byte values and update registers.
@@ -554,7 +570,7 @@ class RFM9x:
         val = int(val)
         if self.high_power:
             if val < 5 or val > 23:
-                raise RuntimeError('tx_power must be between 5 and 23')
+                raise RuntimeError("tx_power must be between 5 and 23")
             # Enable power amp DAC if power is above 20 dB.
             # Lower setting by 3db when PA_BOOST enabled - see Data Sheet  Section 6.4
             if val > 20:
@@ -583,7 +599,7 @@ class RFM9x:
         value to increase throughput or to a lower value to increase the
         likelihood of successfully received payloads).  Valid values are
         listed in RFM9x.bw_bins."""
-        bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf0) >> 4
+        bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF0) >> 4
         if bw_id >= len(self.bw_bins):
             current_bandwidth = 500000
         else:
@@ -600,7 +616,7 @@ class RFM9x:
             bw_id = 9
         self._write_u8(
             _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0f) | (bw_id << 4)
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0F) | (bw_id << 4),
         )
 
     @property
@@ -609,7 +625,7 @@ class RFM9x:
         correction (try setting to a higher value to increase tolerance of
         short bursts of interference or to a lower value to increase bit
         rate).  Valid values are limited to 5, 6, 7, or 8."""
-        cr_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0e) >> 1
+        cr_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0E) >> 1
         denominator = cr_id + 4
         return denominator
 
@@ -620,7 +636,7 @@ class RFM9x:
         cr_id = denominator - 4
         self._write_u8(
             _RH_RF95_REG_1D_MODEM_CONFIG1,
-            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xf1) | (cr_id << 1)
+            (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF1) | (cr_id << 1),
         )
 
     @property
@@ -629,25 +645,21 @@ class RFM9x:
         value to increase the receiver's ability to distinguish signal from
         noise or to a lower value to increase the data transmission rate).
         Valid values are limited to 6, 7, 8, 9, 10, 11, or 12."""
-        sf_id = (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xf0) >> 4
+        sf_id = (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xF0) >> 4
         return sf_id
 
     @spreading_factor.setter
     def spreading_factor(self, val):
         # Set spreading factor (set to 7 to match RadioHead Sf128).
         val = min(max(val, 6), 12)
-        self._write_u8(
-            _RH_RF95_DETECTION_OPTIMIZE, 0xc5 if val == 6 else 0xc3
-        )
-        self._write_u8(
-            _RH_RF95_DETECTION_THRESHOLD, 0x0c if val == 6 else 0x0a
-        )
+        self._write_u8(_RH_RF95_DETECTION_OPTIMIZE, 0xC5 if val == 6 else 0xC3)
+        self._write_u8(_RH_RF95_DETECTION_THRESHOLD, 0x0C if val == 6 else 0x0A)
         self._write_u8(
             _RH_RF95_REG_1E_MODEM_CONFIG2,
             (
-                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0f) |
-                ((val << 4) & 0xf0)
-            )
+                (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x0F)
+                | ((val << 4) & 0xF0)
+            ),
         )
 
     @property
@@ -663,12 +675,12 @@ class RFM9x:
         if val:
             self._write_u8(
                 _RH_RF95_REG_1E_MODEM_CONFIG2,
-                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) | 0x04,
             )
         else:
             self._write_u8(
                 _RH_RF95_REG_1E_MODEM_CONFIG2,
-                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xfb
+                self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
     def send(self, data, keep_listening=False, tx_header=None):
@@ -696,12 +708,12 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Combine header and data to form payload
         payload = bytearray(4)
-        if tx_header is None: #use attributes
+        if tx_header is None:  # use attributes
             payload[0] = self.destination
             payload[1] = self.node
             payload[2] = self.identifier
             payload[3] = self.flags
-        else: #use header passed as argument
+        else:  # use header passed as argument
             payload[0] = tx_header[0]
             payload[1] = tx_header[1]
             payload[2] = tx_header[2]
@@ -724,12 +736,12 @@ class RFM9x:
         if keep_listening:
             self.listen()
         else:
-        # Enter idle mode to stop receiving other packets.
+            # Enter idle mode to stop receiving other packets.
             self.idle()
         # Clear interrupt.
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         if timed_out:
-            raise RuntimeError('Timeout during packet send')
+            raise RuntimeError("Timeout during packet send")
 
     def send_with_ack(self, data):
         """Reliabe Datagram mode:
@@ -742,7 +754,7 @@ class RFM9x:
         else:
             retries_remaining = 1
         got_ack = False
-        self.sequence_number = (self.sequence_number + 1)&0xff
+        self.sequence_number = (self.sequence_number + 1) & 0xFF
         while not got_ack and retries_remaining:
             self.identifier = self.sequence_number
             self.send(data, keep_listening=True)
@@ -765,11 +777,13 @@ class RFM9x:
             retries_remaining = retries_remaining - 1
             # set retry flag in packet header
             self.flags |= _RH_FLAGS_RETRY
-        self.flags = 0 # clear flags
+        self.flags = 0  # clear flags
         return got_ack
 
-    #pylint: disable=too-many-branches
-    def receive(self, keep_listening=True, with_header=False, with_ack=False, timeout=None):
+    # pylint: disable=too-many-branches
+    def receive(
+        self, keep_listening=True, with_header=False, with_ack=False, timeout=None
+    ):
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
            are returned, otherwise None is returned (which indicates the timeout elapsed with no
            reception).
@@ -814,7 +828,7 @@ class RFM9x:
                 fifo_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
                 # Handle if the received packet is too small to include the 4 byte
                 # RadioHead header and at least one byte of data --reject this packet and ignore it.
-                if fifo_length > 0: # read and clear the FIFO if anything in it
+                if fifo_length > 0:  # read and clear the FIFO if anything in it
                     current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
                     self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
                     packet = bytearray(fifo_length)
@@ -825,31 +839,48 @@ class RFM9x:
                 if fifo_length < 5:
                     packet = None
                 else:
-                    if (self.node != _RH_BROADCAST_ADDRESS and packet[0] != _RH_BROADCAST_ADDRESS
-                            and packet[0] != self.node):
+                    if (
+                        self.node != _RH_BROADCAST_ADDRESS
+                        and packet[0] != _RH_BROADCAST_ADDRESS
+                        and packet[0] != self.node
+                    ):
                         packet = None
-                    #send ACK unless this was an ACK or a broadcast
-                    elif with_ack and ((packet[3]&_RH_FLAGS_ACK) == 0) \
-                                and (packet[0] != _RH_BROADCAST_ADDRESS):
+                    # send ACK unless this was an ACK or a broadcast
+                    elif (
+                        with_ack
+                        and ((packet[3] & _RH_FLAGS_ACK) == 0)
+                        and (packet[0] != _RH_BROADCAST_ADDRESS)
+                    ):
                         # delay before sending Ack to give receiver a chance to get ready
                         if self.ack_delay is not None:
                             time.sleep(self.ack_delay)
-                        #send ACK packet to sender
+                        # send ACK packet to sender
                         data = bytes("!", "UTF-8")
-                        self.send(data, tx_header=(packet[1], packet[0],
-                                                   packet[2], packet[3]|_RH_FLAGS_ACK))
-                        #reject Retries if we have seen this idetifier from this source before
-                        if (self.seen_ids[packet[1]] == packet[2]) and (packet[3]&_RH_FLAGS_RETRY):
+                        self.send(
+                            data,
+                            tx_header=(
+                                packet[1],
+                                packet[0],
+                                packet[2],
+                                packet[3] | _RH_FLAGS_ACK,
+                            ),
+                        )
+                        # reject Retries if we have seen this idetifier from this source before
+                        if (self.seen_ids[packet[1]] == packet[2]) and (
+                            packet[3] & _RH_FLAGS_RETRY
+                        ):
                             packet = None
-                        else: # save the packet identifier for this source
+                        else:  # save the packet identifier for this source
                             self.seen_ids[packet[1]] = packet[2]
-                    if not with_header and packet is not None:  # skip the header if not wanted
+                    if (
+                        not with_header and packet is not None
+                    ):  # skip the header if not wanted
                         packet = packet[4:]
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
         else:
-        # Enter idle mode to stop receiving other packets.
+            # Enter idle mode to stop receiving other packets.
             self.idle()
         # Clear interrupt.
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
