@@ -401,6 +401,65 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_0F_FIFO_RX_BASE_ADDR, 0x00)
         # Set mode idle
         self.idle()
+        # Set frequency
+        self.frequency_mhz = frequency
+        # Set preamble length (default 8 bytes to match radiohead).
+        self.preamble_length = preamble_length
+        # set radio configuration parameters
+        self._configure_radio()
+        # initialize last RSSI reading
+        self.last_rssi = 0.0
+        """The RSSI of the last received packet. Stored when the packet was received.
+           This instataneous RSSI value may not be accurate once the
+           operating mode has been changed.
+        """
+        # initialize timeouts and delays delays
+        self.ack_wait = 0.5
+        """The delay time before attempting a retry after not receiving an ACK"""
+        self.receive_timeout = 0.5
+        """The amount of time to poll for a received packet.
+           If no packet is received, the returned packet will be None
+        """
+        self.xmit_timeout = 2.0
+        """The amount of time to wait for the HW to transmit the packet.
+           This is mainly used to prevent a hang due to a HW issue
+        """
+        self.ack_retries = 5
+        """The number of ACK retries before reporting a failure."""
+        self.ack_delay = None
+        """The delay time before attemting to send an ACK.
+           If ACKs are being missed try setting this to .1 or .2.
+        """
+        # initialize sequence number counter for reliabe datagram mode
+        self.sequence_number = 0
+        # create seen Ids list
+        self.seen_ids = bytearray(256)
+        # initialize packet header
+        # node address - default is broadcast
+        self.node = _RH_BROADCAST_ADDRESS
+        """The default address of this Node. (0-255).
+           If not 255 (0xff) then only packets address to this node will be accepted.
+           First byte of the RadioHead header.
+        """
+        # destination address - default is broadcast
+        self.destination = _RH_BROADCAST_ADDRESS
+        """The default destination address for packet transmissions. (0-255).
+           If 255 (0xff) then any receiving node should accept the packet.
+           Second byte of the RadioHead header.
+        """
+        # ID - contains seq count for reliable datagram mode
+        self.identifier = 0
+        """Automatically set to the sequence number when send_with_ack() used.
+           Third byte of the RadioHead header.
+        """
+        # flags - identifies ack/reetry packet for reliable datagram mode
+        self.flags = 0
+        """Upper 4 bits reserved for use by Reliable Datagram Mode.
+           Lower 4 bits may be used to pass information.
+           Fourth byte of the RadioHead header.
+        """
+
+    def _configure_radio(self):
         # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
         self.signal_bandwidth = 125000
         self.coding_rate = 5
@@ -409,33 +468,8 @@ class RFM9x:
         self.enable_crc = False
         # Note no sync word is set for LoRa mode either!
         self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
-        # Set preamble length (default 8 bytes to match radiohead).
-        self.preamble_length = preamble_length
-        # Set frequency
-        self.frequency_mhz = frequency
-        # Set TX power to low defaut, 13 dB.
+        # Set transmit power to 13 dBm, a safe value any module supports.
         self.tx_power = 13
-        # initialize timeouts and delays delays
-        self.ack_wait = 0.5
-        self.receive_timeout = 0.5
-        self.xmit_timeout = 2.0
-        self.ack_retries = 5
-        self.ack_delay = None
-        # initialize sequence number counter for reliabe datagram mode
-        self.sequence_number = 0
-        # create seen Ids list
-        self.seen_ids = bytearray(256)
-        # initialize packet header
-        # node address - default is broadcast
-        self.node = _RH_BROADCAST_ADDRESS
-        # destination address - default is broadcast
-        self.destination = _RH_BROADCAST_ADDRESS
-        # ID - contains seq count for reliable datagram mode
-        self.identifier = 0
-        # flags - identifies ack/reetry packet for reliable datagram mode
-        self.flags = 0
-        # initialize last RSSI reading
-        self.last_rssi = 0.0
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
@@ -683,16 +717,28 @@ class RFM9x:
                 self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
-    def send(self, data, keep_listening=False, tx_header=None):
+    def send(
+        self,
+        data,
+        *,
+        keep_listening=False,
+        destination=None,
+        node=None,
+        identifier=None,
+        flags=None
+    ):
         """Send a string of data using the transmitter.
            You can only send 252 bytes at a time
            (limited by chip's FIFO size and appended headers).
            This appends a 4 byte header to be compatible with the RadioHead library.
-           The tx_header defaults to using the initialized attributes:
+           The header defaults to using the initialized attributes:
            (destination,node,identifier,flags)
-           It may be overidden by specifying a 4-tuple of bytes containing (To,From,ID,Flags)
+           It may be temporarily overidden via the kwargs - destination,node,identifier,flags.
+           Values passed via kwargs do not alter the attribute settings.
            The keep_listening argument should be set to True if you want to start listening
-           automatically after the packet is sent. The default setting is False
+           automatically after the packet is sent. The default setting is False.
+
+           Returns: True if success or False if the send timed out.
         """
         # Disable pylint warning to not use length as a check for zero.
         # This is a puzzling warning as the below code is clearly the most
@@ -700,24 +746,28 @@ class RFM9x:
         # buffer be within an expected range of bounds. Disable this check.
         # pylint: disable=len-as-condition
         assert 0 < len(data) <= 252
-        if tx_header is not None:
-            assert len(tx_header) == 4, "tx header must be 4-tuple (To,From,ID,Flags)"
         # pylint: enable=len-as-condition
         self.idle()  # Stop receiving to clear FIFO and keep it clear.
         # Fill the FIFO with a packet to send.
         self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Combine header and data to form payload
         payload = bytearray(4)
-        if tx_header is None:  # use attributes
+        if destination is None:  # use attribute
             payload[0] = self.destination
+        else:  # use kwarg
+            payload[0] = destination
+        if node is None:  # use attribute
             payload[1] = self.node
+        else:  # use kwarg
+            payload[1] = node
+        if identifier is None:  # use attribute
             payload[2] = self.identifier
+        else:  # use kwarg
+            payload[2] = identifier
+        if flags is None:  # use attribute
             payload[3] = self.flags
-        else:  # use header passed as argument
-            payload[0] = tx_header[0]
-            payload[1] = tx_header[1]
-            payload[2] = tx_header[2]
-            payload[3] = tx_header[3]
+        else:  # use kwarg
+            payload[3] = flags
         payload = payload + data
         # Write payload.
         self._write_from(_RH_RF95_REG_00_FIFO, payload)
@@ -740,8 +790,7 @@ class RFM9x:
             self.idle()
         # Clear interrupt.
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
-        if timed_out:
-            raise RuntimeError("Timeout during packet send")
+        return not timed_out
 
     def send_with_ack(self, data):
         """Reliabe Datagram mode:
@@ -782,7 +831,7 @@ class RFM9x:
 
     # pylint: disable=too-many-branches
     def receive(
-        self, keep_listening=True, with_header=False, with_ack=False, timeout=None
+        self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None
     ):
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
            are returned, otherwise None is returned (which indicates the timeout elapsed with no
@@ -858,12 +907,10 @@ class RFM9x:
                         data = bytes("!", "UTF-8")
                         self.send(
                             data,
-                            tx_header=(
-                                packet[1],
-                                packet[0],
-                                packet[2],
-                                packet[3] | _RH_FLAGS_ACK,
-                            ),
+                            destination=packet[1],
+                            node=packet[0],
+                            identifier=packet[2],
+                            flags=(packet[3] | _RH_FLAGS_ACK),
                         )
                         # reject Retries if we have seen this idetifier from this source before
                         if (self.seen_ids[packet[1]] == packet[2]) and (
