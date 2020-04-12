@@ -9,7 +9,7 @@ import adafruit_rfm9x
 
 # Define radio parameters.
 RADIO_FREQ_MHZ = 915.0  # Frequency of the radio in Mhz. Must match your
-                        # module! Can be a value like 915.0, 433.0, etc.
+# module! Can be a value like 915.0, 433.0, etc.
 
 # Define pins connected to the chip, use these if wiring up the breakout according to the guide:
 CS = digitalio.DigitalInOut(board.D5)
@@ -40,36 +40,36 @@ rfm9x.tx_power = 23
 # This is a limitation of the radio packet size, so if you need to send larger
 # amounts of data you will need to break it into smaller send calls.  Each send
 # call will wait for the previous one to finish before continuing.
-rfm9x.send(bytes("Hello world!\r\n","utf-8"))
-print('Sent Hello World message!')
+rfm9x.send(bytes("Hello world!\r\n", "utf-8"))
+print("Sent Hello World message!")
 
 # Wait to receive packets.  Note that this library can't receive data at a fast
 # rate, in fact it can only receive and process one 252 byte packet at a time.
 # This means you should only use this for low bandwidth scenarios, like sending
 # and receiving a single message at a time.
-print('Waiting for packets...')
+print("Waiting for packets...")
 
 while True:
     packet = rfm9x.receive()
     # Optionally change the receive timeout from its default of 0.5 seconds:
-    #packet = rfm9x.receive(timeout=5.0)
+    # packet = rfm9x.receive(timeout=5.0)
     # If no packet was received during the timeout then None is returned.
     if packet is None:
         # Packet has not been received
         LED.value = False
-        print('Received nothing! Listening again...')
+        print("Received nothing! Listening again...")
     else:
         # Received a packet!
         LED.value = True
         # Print out the raw bytes of the packet:
-        print('Received (raw bytes): {0}'.format(packet))
+        print("Received (raw bytes): {0}".format(packet))
         # And decode to ASCII text and print it too.  Note that you always
         # receive raw bytes and need to convert to a text format like ASCII
         # if you intend to do string processing on your data.  Make sure the
         # sending side is sending ASCII data before you try to decode!
-        packet_text = str(packet, 'ascii')
-        print('Received (ASCII): {0}'.format(packet_text))
+        packet_text = str(packet, "ascii")
+        print("Received (ASCII): {0}".format(packet_text))
         # Also read the RSSI (signal strength) of the last received message and
         # print it.
         rssi = rfm9x.rssi
-        print('Received signal strength: {0} dB'.format(rssi))
+        print("Received signal strength: {0} dB".format(rssi))

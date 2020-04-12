@@ -742,7 +742,6 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         if timed_out:
             raise RuntimeError("Timeout during packet send")
-
     def send_with_ack(self, data):
         """Reliabe Datagram mode:
            Send a packet with data and wait for an ACK response.
