@@ -280,8 +280,8 @@ class RFM9x:
 
     Also note this library tries to be compatible with raw RadioHead Arduino
     library communication. This means the library sets up the radio modulation
-    to match RadioHead's defaults. Features like addressing and guaranteed
-    delivery need to be implemented at an application level.
+    to match RadioHead's defaults and assumes that each packet contains a
+    4 byte header compatible with RadioHead's implementation.
     """
 
     # Global buffer for SPI commands
@@ -793,10 +793,10 @@ class RFM9x:
         return not timed_out
 
     def send_with_ack(self, data):
-        """Reliabe Datagram mode:
+        """Reliable Datagram mode:
            Send a packet with data and wait for an ACK response.
            The packet header is automatically generated.
-           If enabled, the packet tranmsiion will be retried on failure
+           If enabled, the packet transmission will be retried on failure
         """
         if self.ack_retries:
             retries_remaining = self.ack_retries
@@ -839,7 +839,7 @@ class RFM9x:
            If keep_listening is True (the default) the chip will immediately enter listening mode
            after reception of a packet, otherwise it will fall back to idle mode and ignore any
            future reception.
-           All packets must have a 4 byte header A 4-byte header for compatibilty with the
+           All packets must have a 4-byte header for compatibilty with the
            RadioHead library.
            The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
            the header before returning the packet to the caller.
