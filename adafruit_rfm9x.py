@@ -282,6 +282,10 @@ class RFM9x:
     library communication. This means the library sets up the radio modulation
     to match RadioHead's defaults and assumes that each packet contains a
     4 byte header compatible with RadioHead's implementation.
+    Advanced RadioHead features like address/node specific packets
+    or "reliable datagram" delivery are supported however due to the
+    limitations noted, "reliable datagram" is still subject to missed packets but with it,
+    sender is notified if a packet has potentially been missed.
     """
 
     # Global buffer for SPI commands
