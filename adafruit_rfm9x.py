@@ -352,10 +352,6 @@ class RFM9x:
 
     dio0_mapping = _RegisterBits(_RH_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
 
-    tx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=3, bits=1)
-
-    rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
-
     crc_error = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=5, bits=1)
 
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
@@ -409,8 +405,16 @@ class RFM9x:
         self.frequency_mhz = frequency
         # Set preamble length (default 8 bytes to match radiohead).
         self.preamble_length = preamble_length
-        # set radio configuration parameters
-        self._configure_radio()
+        # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
+        self.signal_bandwidth = 125000
+        self.coding_rate = 5
+        self.spreading_factor = 7
+        # Default to disable CRC checking on incoming packets.
+        self.enable_crc = False
+        # Note no sync word is set for LoRa mode either!
+        self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
+        # Set transmit power to 13 dBm, a safe value any module supports.
+        self.tx_power = 13
         # initialize last RSSI reading
         self.last_rssi = 0.0
         """The RSSI of the last received packet. Stored when the packet was received.
@@ -463,17 +467,6 @@ class RFM9x:
            Fourth byte of the RadioHead header.
         """
         self.crc_error_count = 0
-    def _configure_radio(self):
-        # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
-        self.signal_bandwidth = 125000
-        self.coding_rate = 5
-        self.spreading_factor = 7
-        # Default to disable CRC checking on incoming packets.
-        self.enable_crc = False
-        # Note no sync word is set for LoRa mode either!
-        self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
-        # Set transmit power to 13 dBm, a safe value any module supports.
-        self.tx_power = 13
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
@@ -721,6 +714,15 @@ class RFM9x:
                 self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
+    def tx_done(self):
+        """Transmit status"""
+        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x4) >> 3
+
+    def rx_done(self):
+        """Receive status"""
+        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
+
+
     def send(
         self,
         data,
@@ -783,7 +785,7 @@ class RFM9x:
         # best that can be done right now without interrupts).
         start = time.monotonic()
         timed_out = False
-        while not timed_out and not self.tx_done:
+        while not timed_out and not self.tx_done():
             if (time.monotonic() - start) >= self.xmit_timeout:
                 timed_out = True
         # Listen again if necessary and return the result packet.
@@ -864,7 +866,7 @@ class RFM9x:
             self.listen()
             start = time.monotonic()
             timed_out = False
-            while not timed_out and not self.rx_done:
+            while not timed_out and not self.rx_done():
                 if (time.monotonic() - start) >= timeout:
                     timed_out = True
         # Payload ready is set, a packet is in the FIFO.
