@@ -716,7 +716,7 @@ class RFM9x:
 
     def tx_done(self):
         """Transmit status"""
-        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x4) >> 3
+        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
 
     def rx_done(self):
         """Receive status"""
