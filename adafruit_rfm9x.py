@@ -600,7 +600,6 @@ class RFM9x:
         """crc status"""
         return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
-
     def send(
         self,
         data,
@@ -675,7 +674,6 @@ class RFM9x:
         # Clear interrupt.
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return not timed_out
-
 
     def send_with_ack(self, data):
         """Reliable Datagram mode:
@@ -790,7 +788,7 @@ class RFM9x:
                             time.sleep(self.ack_delay)
                         # send ACK packet to sender (data is b'!')
                         self.send(
-                            b'!',
+                            b"!",
                             destination=packet[1],
                             node=packet[0],
                             identifier=packet[2],
