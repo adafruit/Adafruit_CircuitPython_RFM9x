@@ -34,17 +34,6 @@ import random
 import digitalio
 from micropython import const
 
-try:
-    from warnings import warn
-except ImportError:
-
-    def warn(msg, **kwargs):
-        "Issue a warning to stdout."
-        print(
-            "%s: %s"
-            % ("Warning" if kwargs.get("cat") is None else kwargs["cat"].__name__, msg)
-        )
-
 
 import adafruit_bus_device.spi_device as spidev
 
@@ -58,10 +47,6 @@ __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x.git"
 # Register names (FSK Mode even though we use LoRa instead, from table 85)
 _RH_RF95_REG_00_FIFO = const(0x00)
 _RH_RF95_REG_01_OP_MODE = const(0x01)
-_RH_RF95_REG_02_RESERVED = const(0x02)
-_RH_RF95_REG_03_RESERVED = const(0x03)
-_RH_RF95_REG_04_RESERVED = const(0x04)
-_RH_RF95_REG_05_RESERVED = const(0x05)
 _RH_RF95_REG_06_FRF_MSB = const(0x06)
 _RH_RF95_REG_07_FRF_MID = const(0x07)
 _RH_RF95_REG_08_FRF_LSB = const(0x08)
@@ -108,118 +93,9 @@ _RH_RF95_REG_62_AGC_THRESH1 = const(0x62)
 _RH_RF95_REG_63_AGC_THRESH2 = const(0x63)
 _RH_RF95_REG_64_AGC_THRESH3 = const(0x64)
 
-# RH_RF95_REG_01_OP_MODE                             0x01
-_RH_RF95_LONG_RANGE_MODE = const(0x80)
-_RH_RF95_ACCESS_SHARED_REG = const(0x40)
-_RH_RF95_MODE = const(0x07)
-_RH_RF95_MODE_SLEEP = const(0x00)
-_RH_RF95_MODE_STDBY = const(0x01)
-_RH_RF95_MODE_FSTX = const(0x02)
-_RH_RF95_MODE_TX = const(0x03)
-_RH_RF95_MODE_FSRX = const(0x04)
-_RH_RF95_MODE_RXCONTINUOUS = const(0x05)
-_RH_RF95_MODE_RXSINGLE = const(0x06)
-_RH_RF95_MODE_CAD = const(0x07)
-
-# RH_RF95_REG_09_PA_CONFIG                           0x09
-_RH_RF95_PA_SELECT = const(0x80)
-_RH_RF95_MAX_POWER = const(0x70)
-_RH_RF95_OUTPUT_POWER = const(0x0F)
-
-# RH_RF95_REG_0A_PA_RAMP                             0x0a
-_RH_RF95_LOW_PN_TX_PLL_OFF = const(0x10)
-_RH_RF95_PA_RAMP = const(0x0F)
-_RH_RF95_PA_RAMP_3_4MS = const(0x00)
-_RH_RF95_PA_RAMP_2MS = const(0x01)
-_RH_RF95_PA_RAMP_1MS = const(0x02)
-_RH_RF95_PA_RAMP_500US = const(0x03)
-_RH_RF95_PA_RAMP_250US = const(0x04)
-_RH_RF95_PA_RAMP_125US = const(0x05)
-_RH_RF95_PA_RAMP_100US = const(0x06)
-_RH_RF95_PA_RAMP_62US = const(0x07)
-_RH_RF95_PA_RAMP_50US = const(0x08)
-_RH_RF95_PA_RAMP_40US = const(0x09)
-_RH_RF95_PA_RAMP_31US = const(0x0A)
-_RH_RF95_PA_RAMP_25US = const(0x0B)
-_RH_RF95_PA_RAMP_20US = const(0x0C)
-_RH_RF95_PA_RAMP_15US = const(0x0D)
-_RH_RF95_PA_RAMP_12US = const(0x0E)
-_RH_RF95_PA_RAMP_10US = const(0x0F)
-
-# RH_RF95_REG_0B_OCP                                 0x0b
-_RH_RF95_OCP_ON = const(0x20)
-_RH_RF95_OCP_TRIM = const(0x1F)
-
-# RH_RF95_REG_0C_LNA                                 0x0c
-_RH_RF95_LNA_GAIN = const(0xE0)
-_RH_RF95_LNA_BOOST = const(0x03)
-_RH_RF95_LNA_BOOST_DEFAULT = const(0x00)
-_RH_RF95_LNA_BOOST_150PC = const(0x11)
-
-# RH_RF95_REG_11_IRQ_FLAGS_MASK                      0x11
-_RH_RF95_RX_TIMEOUT_MASK = const(0x80)
-_RH_RF95_RX_DONE_MASK = const(0x40)
-_RH_RF95_PAYLOAD_CRC_ERROR_MASK = const(0x20)
-_RH_RF95_VALID_HEADER_MASK = const(0x10)
-_RH_RF95_TX_DONE_MASK = const(0x08)
-_RH_RF95_CAD_DONE_MASK = const(0x04)
-_RH_RF95_FHSS_CHANGE_CHANNEL_MASK = const(0x02)
-_RH_RF95_CAD_DETECTED_MASK = const(0x01)
-
-# RH_RF95_REG_12_IRQ_FLAGS                           0x12
-_RH_RF95_RX_TIMEOUT = const(0x80)
-_RH_RF95_RX_DONE = const(0x40)
-_RH_RF95_PAYLOAD_CRC_ERROR = const(0x20)
-_RH_RF95_VALID_HEADER = const(0x10)
-_RH_RF95_TX_DONE = const(0x08)
-_RH_RF95_CAD_DONE = const(0x04)
-_RH_RF95_FHSS_CHANGE_CHANNEL = const(0x02)
-_RH_RF95_CAD_DETECTED = const(0x01)
-
-# RH_RF95_REG_18_MODEM_STAT                          0x18
-_RH_RF95_RX_CODING_RATE = const(0xE0)
-_RH_RF95_MODEM_STATUS_CLEAR = const(0x10)
-_RH_RF95_MODEM_STATUS_HEADER_INFO_VALID = const(0x08)
-_RH_RF95_MODEM_STATUS_RX_ONGOING = const(0x04)
-_RH_RF95_MODEM_STATUS_SIGNAL_SYNCHRONIZED = const(0x02)
-_RH_RF95_MODEM_STATUS_SIGNAL_DETECTED = const(0x01)
-
-# RH_RF95_REG_1C_HOP_CHANNEL                         0x1c
-_RH_RF95_PLL_TIMEOUT = const(0x80)
-_RH_RF95_RX_PAYLOAD_CRC_IS_ON = const(0x40)
-_RH_RF95_FHSS_PRESENT_CHANNEL = const(0x3F)
-
-# RH_RF95_REG_1D_MODEM_CONFIG1                       0x1d
-_RH_RF95_BW = const(0xC0)
-_RH_RF95_BW_125KHZ = const(0x00)
-_RH_RF95_BW_250KHZ = const(0x40)
-_RH_RF95_BW_500KHZ = const(0x80)
-_RH_RF95_BW_RESERVED = const(0xC0)
-_RH_RF95_CODING_RATE = const(0x38)
-_RH_RF95_CODING_RATE_4_5 = const(0x00)
-_RH_RF95_CODING_RATE_4_6 = const(0x08)
-_RH_RF95_CODING_RATE_4_7 = const(0x10)
-_RH_RF95_CODING_RATE_4_8 = const(0x18)
-_RH_RF95_IMPLICIT_HEADER_MODE_ON = const(0x04)
-_RH_RF95_RX_PAYLOAD_CRC_ON = const(0x02)
-_RH_RF95_LOW_DATA_RATE_OPTIMIZE = const(0x01)
-
-# RH_RF95_REG_1E_MODEM_CONFIG2                       0x1e
 _RH_RF95_DETECTION_OPTIMIZE = const(0x31)
 _RH_RF95_DETECTION_THRESHOLD = const(0x37)
-_RH_RF95_SPREADING_FACTOR = const(0xF0)
-_RH_RF95_SPREADING_FACTOR_64CPS = const(0x60)
-_RH_RF95_SPREADING_FACTOR_128CPS = const(0x70)
-_RH_RF95_SPREADING_FACTOR_256CPS = const(0x80)
-_RH_RF95_SPREADING_FACTOR_512CPS = const(0x90)
-_RH_RF95_SPREADING_FACTOR_1024CPS = const(0xA0)
-_RH_RF95_SPREADING_FACTOR_2048CPS = const(0xB0)
-_RH_RF95_SPREADING_FACTOR_4096CPS = const(0xC0)
-_RH_RF95_TX_CONTINUOUS_MOE = const(0x08)
-_RH_RF95_AGC_AUTO_ON = const(0x04)
-_RH_RF95_SYM_TIMEOUT_MSB = const(0x03)
 
-# RH_RF95_REG_4D_PA_DAC                              0x4d
 _RH_RF95_PA_DAC_DISABLE = const(0x04)
 _RH_RF95_PA_DAC_ENABLE = const(0x07)
 
@@ -352,12 +228,6 @@ class RFM9x:
 
     dio0_mapping = _RegisterBits(_RH_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
 
-    tx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=3, bits=1)
-
-    rx_done = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=6, bits=1)
-
-    crc_error = _RegisterBits(_RH_RF95_REG_12_IRQ_FLAGS, offset=5, bits=1)
-
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
     def __init__(
@@ -409,8 +279,16 @@ class RFM9x:
         self.frequency_mhz = frequency
         # Set preamble length (default 8 bytes to match radiohead).
         self.preamble_length = preamble_length
-        # set radio configuration parameters
-        self._configure_radio()
+        # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
+        self.signal_bandwidth = 125000
+        self.coding_rate = 5
+        self.spreading_factor = 7
+        # Default to disable CRC checking on incoming packets.
+        self.enable_crc = False
+        # Note no sync word is set for LoRa mode either!
+        self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
+        # Set transmit power to 13 dBm, a safe value any module supports.
+        self.tx_power = 13
         # initialize last RSSI reading
         self.last_rssi = 0.0
         """The RSSI of the last received packet. Stored when the packet was received.
@@ -462,18 +340,7 @@ class RFM9x:
            Lower 4 bits may be used to pass information.
            Fourth byte of the RadioHead header.
         """
-
-    def _configure_radio(self):
-        # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
-        self.signal_bandwidth = 125000
-        self.coding_rate = 5
-        self.spreading_factor = 7
-        # Default to disable CRC checking on incoming packets.
-        self.enable_crc = False
-        # Note no sync word is set for LoRa mode either!
-        self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
-        # Set transmit power to 13 dBm, a safe value any module supports.
-        self.tx_power = 13
+        self.crc_error_count = 0
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
@@ -721,6 +588,18 @@ class RFM9x:
                 self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
+    def tx_done(self):
+        """Transmit status"""
+        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
+
+    def rx_done(self):
+        """Receive status"""
+        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
+
+    def crc_error(self):
+        """crc status"""
+        return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
+
     def send(
         self,
         data,
@@ -783,7 +662,7 @@ class RFM9x:
         # best that can be done right now without interrupts).
         start = time.monotonic()
         timed_out = False
-        while not timed_out and not self.tx_done:
+        while not timed_out and not self.tx_done():
             if (time.monotonic() - start) >= self.xmit_timeout:
                 timed_out = True
         # Listen again if necessary and return the result packet.
@@ -863,7 +742,7 @@ class RFM9x:
             self.listen()
             start = time.monotonic()
             timed_out = False
-            while not timed_out and not self.rx_done:
+            while not timed_out and not self.rx_done():
                 if (time.monotonic() - start) >= timeout:
                     timed_out = True
         # Payload ready is set, a packet is in the FIFO.
@@ -873,8 +752,8 @@ class RFM9x:
         # Enter idle mode to stop receiving other packets.
         self.idle()
         if not timed_out:
-            if self.enable_crc and self.crc_error:
-                warn("CRC error, packet ignored")
+            if self.enable_crc and self.crc_error():
+                self.crc_error_count += 1
             else:
                 # Read the data from the FIFO.
                 # Read the length of the FIFO.
@@ -907,10 +786,9 @@ class RFM9x:
                         # delay before sending Ack to give receiver a chance to get ready
                         if self.ack_delay is not None:
                             time.sleep(self.ack_delay)
-                        # send ACK packet to sender
-                        data = bytes("!", "UTF-8")
+                        # send ACK packet to sender (data is b'!')
                         self.send(
-                            data,
+                            b"!",
                             destination=packet[1],
                             node=packet[0],
                             identifier=packet[2],
