@@ -31,7 +31,6 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 """
 import time
 import random
-import digitalio
 from micropython import const
 
 
@@ -245,12 +244,11 @@ class RFM9x:
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
         self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
-        # Setup reset as a digital input (default state for reset line according
-        # to the datasheet).  This line is pulled low as an output quickly to
-        # trigger a reset.  Note that reset MUST be done like this and set as
-        # a high impedence input or else the chip cannot change modes (trust me!).
+        # Setup reset as a digital output - initially High
+        # This line is pulled low as an output quickly to trigger a reset.
         self._reset = reset
-        self._reset.switch_to_input(pull=digitalio.Pull.UP)
+        # initialize Reset High
+        self._reset.switch_to_output(value=True)
         self.reset()
         # No device type check!  Catch an error from the very first request and
         # throw a nicer message to indicate possible wiring problems.
@@ -385,9 +383,9 @@ class RFM9x:
     def reset(self):
         """Perform a reset of the chip."""
         # See section 7.2.2 of the datasheet for reset description.
-        self._reset.switch_to_output(value=False)
+        self._reset.value = False  # Set Reset Low
         time.sleep(0.0001)  # 100 us
-        self._reset.switch_to_input(pull=digitalio.Pull.UP)
+        self._reset.value = True  # set Reset High
         time.sleep(0.005)  # 5 ms
 
     def idle(self):
