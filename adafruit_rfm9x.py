@@ -126,6 +126,7 @@ RX_MODE = 0b101
 # is a complex chip which requires exposing many attributes and state.  Disable
 # the warning to work around the error.
 # pylint: disable=too-many-instance-attributes
+# pylint: disable=too-many-statements
 
 
 class RFM9x:
@@ -145,7 +146,7 @@ class RFM9x:
     is True for high power.
     - baudrate: Baud rate of the SPI connection, default is 10mhz but you might
     choose to lower to 1mhz if using long wires or a breadboard.
-
+    - agc: Boolean to Enable/Disable Automatic Gain Control - Default=False (AGC off)
     Remember this library makes a best effort at receiving packets with pure
     Python code.  Trying to receive packets too quickly will result in lost data
     so limit yourself to simple scenarios of sending and receiving single
@@ -225,6 +226,18 @@ class RFM9x:
 
     dio0_mapping = _RegisterBits(_RH_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
 
+    auto_agc = _RegisterBits(_RH_RF95_REG_26_MODEM_CONFIG3, offset=2, bits=1)
+
+    low_datarate_optimize = _RegisterBits(
+        _RH_RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1
+    )
+
+    lna_boost_hf = _RegisterBits(_RH_RF95_REG_0C_LNA, offset=0, bits=2)
+
+    auto_ifon = _RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=7, bits=1)
+
+    detection_optimize = _RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=0, bits=3)
+
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
     def __init__(
@@ -236,7 +249,8 @@ class RFM9x:
         *,
         preamble_length=8,
         high_power=True,
-        baudrate=5000000
+        baudrate=5000000,
+        agc=False
     ):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
@@ -281,14 +295,15 @@ class RFM9x:
         self.spreading_factor = 7
         # Default to disable CRC checking on incoming packets.
         self.enable_crc = False
-        # Note no sync word is set for LoRa mode either!
-        self._write_u8(_RH_RF95_REG_26_MODEM_CONFIG3, 0x00)  # Preamble lsb?
+        # set AGC - Default = True
+        self.auto_agc = agc
+        """Automatic Gain Control state"""
         # Set transmit power to 13 dBm, a safe value any module supports.
         self.tx_power = 13
         # initialize last RSSI reading
         self.last_rssi = 0.0
         """The RSSI of the last received packet. Stored when the packet was received.
-           This instantaneous RSSI value may not be accurate once the
+           The instantaneous RSSI value may not be accurate once the
            operating mode has been changed.
         """
         # initialize timeouts and delays delays
@@ -492,7 +507,12 @@ class RFM9x:
         """The received strength indicator (in dBm) of the last received message."""
         # Read RSSI register and convert to value using formula in datasheet.
         # Remember in LoRa mode the payload register changes function to RSSI!
-        return self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE) - 137
+        raw_rssi = self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE)
+        if self.low_frequency_mode:
+            raw_rssi -= 157
+        else:
+            raw_rssi -= 164
+        return raw_rssi
 
     @property
     def signal_bandwidth(self):
@@ -519,6 +539,28 @@ class RFM9x:
             _RH_RF95_REG_1D_MODEM_CONFIG1,
             (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0F) | (bw_id << 4),
         )
+        if val >= 500000:
+            # see Semtech SX1276 errata note 2.3
+            self.auto_ifon = True
+            # see Semtech SX1276 errata note 2.1
+            if self.low_frequency_mode:
+                self._write_u8(0x36, 0x02)
+                self._write_u8(0x3A, 0x7F)
+            else:
+                self._write_u8(0x36, 0x02)
+                self._write_u8(0x3A, 0x64)
+        else:
+            # see Semtech SX1276 errata note 2.3
+            self.auto_ifon = False
+            self._write_u8(0x36, 0x03)
+            if val == 7800:
+                self._write_u8(0x2F, 0x48)
+            elif val >= 62500:
+                # see Semtech SX1276 errata note 2.3
+                self._write_u8(0x2F, 0x40)
+            else:
+                self._write_u8(0x2F, 0x44)
+            self._write_u8(0x30, 0)
 
     @property
     def coding_rate(self):
@@ -553,7 +595,12 @@ class RFM9x:
     def spreading_factor(self, val):
         # Set spreading factor (set to 7 to match RadioHead Sf128).
         val = min(max(val, 6), 12)
-        self._write_u8(_RH_RF95_DETECTION_OPTIMIZE, 0xC5 if val == 6 else 0xC3)
+
+        if val == 6:
+            self.detection_optimize = 0x5
+        else:
+            self.detection_optimize = 0x3
+
         self._write_u8(_RH_RF95_DETECTION_THRESHOLD, 0x0C if val == 6 else 0x0A)
         self._write_u8(
             _RH_RF95_REG_1E_MODEM_CONFIG2,
