@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 # Example using Interrupts to send a message and then wait indefinitely for messages
 # to be received. Interrupts are used only for receive. sending is done with polling.
 # This example is for systems that support interrupts like the Raspberry Pi with "blinka"
