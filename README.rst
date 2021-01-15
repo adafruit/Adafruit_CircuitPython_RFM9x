@@ -75,7 +75,7 @@ project:
     spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
     rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
-Note: the default baudrate for the SPI is 50000000 (5MHz). The maximum setting is 10Mhz but 
+Note: the default baudrate for the SPI is 50000000 (5MHz). The maximum setting is 10Mhz but
 transmission errors have been observed expecially when using breakout boards.
 For breakout boards or other configurations where the boards are separated, it may be necessary to reduce
 the baudrate for reliable data transmission.

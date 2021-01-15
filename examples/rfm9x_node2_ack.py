@@ -1,3 +1,6 @@
+# SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
+# SPDX-License-Identifier: MIT
+
 # Example to receive addressed packed with ACK and send a response
 # Author: Jerry Needell
 #

@@ -1,24 +1,7 @@
-# The MIT License (MIT)
+# SPDX-FileCopyrightText: 2017 Tony DiCola for Adafruit Industries
 #
-# Copyright (c) 2017 Tony DiCola for Adafruit Industries
-#
-# Permission is hereby granted, free of charge, to any person obtaining a copy
-# of this software and associated documentation files (the "Software"), to deal
-# in the Software without restriction, including without limitation the rights
-# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-# copies of the Software, and to permit persons to whom the Software is
-# furnished to do so, subject to the following conditions:
-#
-# The above copyright notice and this permission notice shall be included in
-# all copies or substantial portions of the Software.
-#
-# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-# THE SOFTWARE.
+# SPDX-License-Identifier: MIT
+
 """
 `adafruit_rfm9x`
 ====================================================
@@ -654,17 +637,17 @@ class RFM9x:
         flags=None
     ):
         """Send a string of data using the transmitter.
-           You can only send 252 bytes at a time
-           (limited by chip's FIFO size and appended headers).
-           This appends a 4 byte header to be compatible with the RadioHead library.
-           The header defaults to using the initialized attributes:
-           (destination,node,identifier,flags)
-           It may be temporarily overidden via the kwargs - destination,node,identifier,flags.
-           Values passed via kwargs do not alter the attribute settings.
-           The keep_listening argument should be set to True if you want to start listening
-           automatically after the packet is sent. The default setting is False.
+        You can only send 252 bytes at a time
+        (limited by chip's FIFO size and appended headers).
+        This appends a 4 byte header to be compatible with the RadioHead library.
+        The header defaults to using the initialized attributes:
+        (destination,node,identifier,flags)
+        It may be temporarily overidden via the kwargs - destination,node,identifier,flags.
+        Values passed via kwargs do not alter the attribute settings.
+        The keep_listening argument should be set to True if you want to start listening
+        automatically after the packet is sent. The default setting is False.
 
-           Returns: True if success or False if the send timed out.
+        Returns: True if success or False if the send timed out.
         """
         # Disable pylint warning to not use length as a check for zero.
         # This is a puzzling warning as the below code is clearly the most
@@ -720,9 +703,9 @@ class RFM9x:
 
     def send_with_ack(self, data):
         """Reliable Datagram mode:
-           Send a packet with data and wait for an ACK response.
-           The packet header is automatically generated.
-           If enabled, the packet transmission will be retried on failure
+        Send a packet with data and wait for an ACK response.
+        The packet header is automatically generated.
+        If enabled, the packet transmission will be retried on failure
         """
         if self.ack_retries:
             retries_remaining = self.ack_retries
@@ -760,18 +743,18 @@ class RFM9x:
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None
     ):
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
-           are returned, otherwise None is returned (which indicates the timeout elapsed with no
-           reception).
-           If keep_listening is True (the default) the chip will immediately enter listening mode
-           after reception of a packet, otherwise it will fall back to idle mode and ignore any
-           future reception.
-           All packets must have a 4-byte header for compatibilty with the
-           RadioHead library.
-           The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
-           the header before returning the packet to the caller.
-           If with_header is True then the 4 byte header will be returned with the packet.
-           The payload then begins at packet[4].
-           If with_ack is True, send an ACK after receipt (Reliable Datagram mode)
+        are returned, otherwise None is returned (which indicates the timeout elapsed with no
+        reception).
+        If keep_listening is True (the default) the chip will immediately enter listening mode
+        after reception of a packet, otherwise it will fall back to idle mode and ignore any
+        future reception.
+        All packets must have a 4-byte header for compatibilty with the
+        RadioHead library.
+        The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
+        the header before returning the packet to the caller.
+        If with_header is True then the 4 byte header will be returned with the packet.
+        The payload then begins at packet[4].
+        If with_ack is True, send an ACK after receipt (Reliable Datagram mode)
         """
         timed_out = False
         if timeout is None:
