@@ -12,17 +12,14 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 
 * Author(s): Tony DiCola, Jerry Needell
 """
-import time
 import random
-from micropython import const
-
+import time
 
 import adafruit_bus_device.spi_device as spidev
-
+from micropython import const
 
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x.git"
-
 
 # Internal constants:
 # Register names (FSK Mode even though we use LoRa instead, from table 85)
@@ -289,6 +286,11 @@ class RFM9x:
            The instantaneous RSSI value may not be accurate once the
            operating mode has been changed.
         """
+        self.last_snr = 0.0
+        """The SNR of the last received packet. Stored when the packet was received.
+           The instantaneous SNR value may not be accurate once the
+           operating mode has been changed.
+        """
         # initialize timeouts and delays delays
         self.ack_wait = 0.5
         """The delay time before attempting a retry after not receiving an ACK"""
@@ -496,6 +498,16 @@ class RFM9x:
         else:
             raw_rssi -= 164
         return raw_rssi
+
+    @property
+    def snr(self):
+        """The SNR (in dB) of the last received message."""
+        # Read SNR 0x19 register and convert to value using formula in datasheet.
+        # SNR(dB) = PacketSnr [twos complement] / 4
+        snr_byte = self._read_u8(_RH_RF95_REG_19_PKT_SNR_VALUE)
+        if snr_byte > 127:
+            snr_byte = (256 - snr_byte) * -1
+        return snr_byte / 4
 
     @property
     def signal_bandwidth(self):
@@ -775,6 +787,10 @@ class RFM9x:
         packet = None
         # save last RSSI reading
         self.last_rssi = self.rssi
+
+        # save the last SNR reading
+        self.last_snr = self.snr
+
         # Enter idle mode to stop receiving other packets.
         self.idle()
         if not timed_out:
