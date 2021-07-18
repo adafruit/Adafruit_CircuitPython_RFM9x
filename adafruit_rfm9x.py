@@ -127,7 +127,7 @@ class RFM9x:
     - baudrate: Baud rate of the SPI connection, default is 10mhz but you might
     choose to lower to 1mhz if using long wires or a breadboard.
     - agc: Boolean to Enable/Disable Automatic Gain Control - Default=False (AGC off)
-    - agc: Boolean to Enable/Disable Cyclic Redundancy Check - Default=True (CRC Enabled)
+    - crc: Boolean to Enable/Disable Cyclic Redundancy Check - Default=True (CRC Enabled)
     Remember this library makes a best effort at receiving packets with pure
     Python code.  Trying to receive packets too quickly will result in lost data
     so limit yourself to simple scenarios of sending and receiving single
