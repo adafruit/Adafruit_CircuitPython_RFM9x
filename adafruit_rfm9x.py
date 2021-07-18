@@ -277,8 +277,8 @@ class RFM9x:
         self.spreading_factor = 7
         # Default to enable CRC checking on incoming packets.
         self.enable_crc = crc
-        # set AGC - Default = False
         """CRC Enable state"""
+        # set AGC - Default = False
         self.auto_agc = agc
         """Automatic Gain Control state"""
         # Set transmit power to 13 dBm, a safe value any module supports.
