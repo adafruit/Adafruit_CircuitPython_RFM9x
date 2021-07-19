@@ -127,6 +127,7 @@ class RFM9x:
     - baudrate: Baud rate of the SPI connection, default is 10mhz but you might
     choose to lower to 1mhz if using long wires or a breadboard.
     - agc: Boolean to Enable/Disable Automatic Gain Control - Default=False (AGC off)
+    - crc: Boolean to Enable/Disable Cyclic Redundancy Check - Default=True (CRC Enabled)
     Remember this library makes a best effort at receiving packets with pure
     Python code.  Trying to receive packets too quickly will result in lost data
     so limit yourself to simple scenarios of sending and receiving single
@@ -230,7 +231,8 @@ class RFM9x:
         preamble_length=8,
         high_power=True,
         baudrate=5000000,
-        agc=False
+        agc=False,
+        crc=True
     ):
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
@@ -273,9 +275,10 @@ class RFM9x:
         self.signal_bandwidth = 125000
         self.coding_rate = 5
         self.spreading_factor = 7
-        # Default to disable CRC checking on incoming packets.
-        self.enable_crc = False
-        # set AGC - Default = True
+        # Default to enable CRC checking on incoming packets.
+        self.enable_crc = crc
+        """CRC Enable state"""
+        # set AGC - Default = False
         self.auto_agc = agc
         """Automatic Gain Control state"""
         # Set transmit power to 13 dBm, a safe value any module supports.

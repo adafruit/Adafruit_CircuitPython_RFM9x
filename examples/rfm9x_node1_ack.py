@@ -27,8 +27,6 @@ spi = busio.SPI(board.SCK, MOSI=board.MOSI, MISO=board.MISO)
 # Initialze RFM radio
 rfm9x = adafruit_rfm9x.RFM9x(spi, CS, RESET, RADIO_FREQ_MHZ)
 
-# enable CRC checking
-rfm9x.enable_crc = True
 # set delay before sending ACK
 rfm9x.ack_delay = 0.1
 # set node addresses

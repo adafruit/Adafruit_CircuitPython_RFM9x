@@ -66,9 +66,6 @@ except RuntimeError:
 
 display.show()
 
-# enable CRC checking
-rfm9x.enable_crc = True
-
 # set node addresses
 rfm9x.node = 1
 rfm9x.destination = 2
