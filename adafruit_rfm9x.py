@@ -6,7 +6,7 @@
 `adafruit_rfm9x`
 ====================================================
 
-CircuitPython module for the RFM95/6/7/8 LoRa 433/915mhz radio modules. This is
+CircuitPython module for the RFM95/6/7/8 LoRa 433/915mhz radio modules.  This is
 adapted from the Radiohead library RF95 code from:
 http: www.airspayce.com/mikem/arduino/RadioHead/
 
@@ -102,16 +102,16 @@ FS_RX_MODE = 0b100
 RX_MODE = 0b101
 
 
-# Disable the too many instance members warning. Pylint has no knowledge
-# of the context and is merely guessing at the proper amount of members. This
-# is a complex chip which requires exposing many attributes and state. Disable
+# Disable the too many instance members warning.  Pylint has no knowledge
+# of the context and is merely guessing at the proper amount of members.  This
+# is a complex chip which requires exposing many attributes and state.  Disable
 # the warning to work around the error.
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-statements
 
 
 class RFM9x:
-    """Interface to a RFM95/6/7/8 LoRa radio module. Allows sending and
+    """Interface to a RFM95/6/7/8 LoRa radio module.  Allows sending and
     receivng bytes of data in long range LoRa mode at a support board frequency
     (433/915mhz).
 
@@ -123,14 +123,14 @@ class RFM9x:
 
     You can optionally specify:
     - preamble_length: The length in bytes of the packet preamble (default 8).
-    - high_power: Boolean to indicate a high power board (RFM95, etc.). Default
+    - high_power: Boolean to indicate a high power board (RFM95, etc.).  Default
     is True for high power.
     - baudrate: Baud rate of the SPI connection, default is 10mhz but you might
     choose to lower to 1mhz if using long wires or a breadboard.
     - agc: Boolean to Enable/Disable Automatic Gain Control - Default=False (AGC off)
     - crc: Boolean to Enable/Disable Cyclic Redundancy Check - Default=True (CRC Enabled)
     Remember this library makes a best effort at receiving packets with pure
-    Python code. Trying to receive packets too quickly will result in lost data
+    Python code.  Trying to receive packets too quickly will result in lost data
     so limit yourself to simple scenarios of sending and receiving single
     packets at a time.
 
@@ -152,21 +152,21 @@ class RFM9x:
 
     class _RegisterBits:
         # Class to simplify access to the many configuration bits avaialable
-        # on the chip's registers. This is a subclass here instead of using
+        # on the chip's registers.  This is a subclass here instead of using
         # a higher level module to increase the efficiency of memory usage
         # (all of the instances of this bit class will share the same buffer
         # used by the parent RFM69 class instance vs. each having their own
         # buffer and taking too much memory).
 
-        # Quirk of pylint that it requires public methods for a class. This
+        # Quirk of pylint that it requires public methods for a class.  This
         # is a decorator class in Python and by design it has no public methods.
-        # Instead it uses dunder accessors like get and set below. For some
+        # Instead it uses dunder accessors like get and set below.  For some
         # reason pylint can't figure this out so disable the check.
         # pylint: disable=too-few-public-methods
 
         # Again pylint fails to see the true intent of this code and warns
         # against private access by calling the write and read functions below.
-        # This is by design as this is an internally used class. Disable the
+        # This is by design as this is an internally used class.  Disable the
         # check from pylint.
         # pylint: disable=protected-access
 
@@ -193,20 +193,36 @@ class RFM9x:
             obj._write_u8(self._address, reg_value)
 
     operation_mode = _RegisterBits(_RH_RF95_REG_01_OP_MODE, bits=3)
+
     low_frequency_mode = _RegisterBits(_RH_RF95_REG_01_OP_MODE, offset=3, bits=1)
+
     modulation_type = _RegisterBits(_RH_RF95_REG_01_OP_MODE, offset=5, bits=2)
+
     # Long range/LoRa mode can only be set in sleep mode!
     long_range_mode = _RegisterBits(_RH_RF95_REG_01_OP_MODE, offset=7, bits=1)
+
     output_power = _RegisterBits(_RH_RF95_REG_09_PA_CONFIG, bits=4)
+
     max_power = _RegisterBits(_RH_RF95_REG_09_PA_CONFIG, offset=4, bits=3)
+
     pa_select = _RegisterBits(_RH_RF95_REG_09_PA_CONFIG, offset=7, bits=1)
+
     pa_dac = _RegisterBits(_RH_RF95_REG_4D_PA_DAC, bits=3)
+
     dio0_mapping = _RegisterBits(_RH_RF95_REG_40_DIO_MAPPING1, offset=6, bits=2)
+
     auto_agc = _RegisterBits(_RH_RF95_REG_26_MODEM_CONFIG3, offset=2, bits=1)
-    low_datarate_optimize = _RegisterBits(_RH_RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1)
+
+    low_datarate_optimize = _RegisterBits(
+        _RH_RF95_REG_26_MODEM_CONFIG3, offset=3, bits=1
+    )
+
     lna_boost_hf = _RegisterBits(_RH_RF95_REG_0C_LNA, offset=0, bits=2)
+
     auto_ifon = _RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=7, bits=1)
+
     detection_optimize = _RegisterBits(_RH_RF95_DETECTION_OPTIMIZE, offset=0, bits=3)
+
     bw_bins = (7800, 10400, 15600, 20800, 31250, 41700, 62500, 125000, 250000)
 
     def __init__(
@@ -236,7 +252,9 @@ class RFM9x:
         # throw a nicer message to indicate possible wiring problems.
         version = self._read_u8(_RH_RF95_REG_42_VERSION)
         if version != 18:
-            raise RuntimeError("Failed to find rfm9x with expected version -- check wiring")
+            raise RuntimeError(
+                "Failed to find rfm9x with expected version -- check wiring"
+            )
 
         # Set sleep mode, wait 10s and confirm in sleep mode (basic device check).
         # Also set long range mode (LoRa mode) as it can only be done in sleep.
@@ -331,7 +349,7 @@ class RFM9x:
     # Reconsider pylint: disable when this can be tested
     def _read_into(self, address, buf, length=None):
         # Read a number of bytes from the specified address into the provided
-        # buffer. If length is not specified (the default) the entire buffer
+        # buffer.  If length is not specified (the default) the entire buffer
         # will be filled.
         if length is None:
             length = len(buf)
@@ -348,7 +366,7 @@ class RFM9x:
 
     def _write_from(self, address, buf, length=None):
         # Write a number of bytes to the provided address and taken from the
-        # provided buffer. If no length is specified (the default) the entire
+        # provided buffer.  If no length is specified (the default) the entire
         # buffer is written.
         if length is None:
             length = len(buf)
@@ -359,7 +377,7 @@ class RFM9x:
             device.write(buf, end=length)
 
     def _write_u8(self, address, val):
-        # Write a byte register to the chip. Specify the 7-bit address and the
+        # Write a byte register to the chip.  Specify the 7-bit address and the
         # 8-bit value to write to that address.
         with self._device as device:
             self._BUFFER[0] = (address | 0x80) & 0xFF  # Set top bit to 1 to
@@ -384,15 +402,15 @@ class RFM9x:
         self.operation_mode = SLEEP_MODE
 
     def listen(self):
-        """Listen for packets to be received by the chip. Use :py:func:`receive`
+        """Listen for packets to be received by the chip.  Use :py:func:`receive`
         to listen, wait and retrieve packets as they're available.
         """
         self.operation_mode = RX_MODE
         self.dio0_mapping = 0b00  # Interrupt on rx done.
 
     def transmit(self):
-        """Transmit a packet which is queued in the FIFO. This is a low level
-        function for entering transmit mode and more. For generating and
+        """Transmit a packet which is queued in the FIFO.  This is a low level
+        function for entering transmit mode and more.  For generating and
         transmitting a packet of data use :py:func:`send` instead.
         """
         self.operation_mode = TX_MODE
@@ -401,7 +419,7 @@ class RFM9x:
     @property
     def preamble_length(self):
         """The length of the preamble for sent and received packets, an unsigned
-        16-bit value. Received packets must match this length or they are
+        16-bit value.  Received packets must match this length or they are
         ignored! Set to 8 to match the RadioHead RFM95 library.
         """
         msb = self._read_u8(_RH_RF95_REG_20_PREAMBLE_MSB)
@@ -502,7 +520,7 @@ class RFM9x:
     def signal_bandwidth(self):
         """The signal bandwidth used by the radio (try setting to a higher
         value to increase throughput or to a lower value to increase the
-        likelihood of successfully received payloads). Valid values are
+        likelihood of successfully received payloads).  Valid values are
         listed in RFM9x.bw_bins."""
         bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF0) >> 4
         if bw_id >= len(self.bw_bins):
@@ -551,7 +569,7 @@ class RFM9x:
         """The coding rate used by the radio to control forward error
         correction (try setting to a higher value to increase tolerance of
         short bursts of interference or to a lower value to increase bit
-        rate). Valid values are limited to 5, 6, 7, or 8."""
+        rate).  Valid values are limited to 5, 6, 7, or 8."""
         cr_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0E) >> 1
         denominator = cr_id + 4
         return denominator
@@ -597,7 +615,7 @@ class RFM9x:
     @property
     def enable_crc(self):
         """Set to True to enable hardware CRC checking of incoming packets.
-        Incoming packets that fail the CRC check are not processed. Set to
+        Incoming packets that fail the CRC check are not processed.  Set to
         False to disable CRC checking and process all incoming packets."""
         return (self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0x04) == 0x04
 
@@ -627,7 +645,16 @@ class RFM9x:
         """crc status"""
         return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
-    def send(self, data, *, keep_listening=False, destination=None, node=None, identifier=None, flags=None, headers=False):
+    def send(
+        self,
+        data,
+        *,
+        keep_listening=False,
+        destination=None,
+        node=None,
+        identifier=None,
+        flags=None
+    ):
         """Send a string of data using the transmitter.
         You can only send 252 bytes at a time
         (limited by chip's FIFO size and appended headers).
@@ -652,29 +679,28 @@ class RFM9x:
         # Fill the FIFO with a packet to send.
         self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, 0x00)  # FIFO starts at 0.
         # Combine header and data to form payload
-        if headers == True:
-            payload = bytearray(4)
-            if destination is None:  # use attribute
-                payload[0] = self.destination
-            else:  # use kwarg
-                payload[0] = destination
-            if node is None:  # use attribute
-                payload[1] = self.node
-            else:  # use kwarg
-                payload[1] = node
-            if identifier is None:  # use attribute
-                payload[2] = self.identifier
-            else:  # use kwarg
-                payload[2] = identifier
-            if flags is None:  # use attribute
-                payload[3] = self.flags
-            else:  # use kwarg
-                payload[3] = flags
-            data = payload + data
+        payload = bytearray(4)
+        if destination is None:  # use attribute
+            payload[0] = self.destination
+        else:  # use kwarg
+            payload[0] = destination
+        if node is None:  # use attribute
+            payload[1] = self.node
+        else:  # use kwarg
+            payload[1] = node
+        if identifier is None:  # use attribute
+            payload[2] = self.identifier
+        else:  # use kwarg
+            payload[2] = identifier
+        if flags is None:  # use attribute
+            payload[3] = self.flags
+        else:  # use kwarg
+            payload[3] = flags
+        payload = payload + data
         # Write payload.
-        self._write_from(_RH_RF95_REG_00_FIFO, data)
+        self._write_from(_RH_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
-        self._write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(data))
+        self._write_u8(_RH_RF95_REG_22_PAYLOAD_LENGTH, len(payload))
         # Turn on transmit mode to send out the packet.
         self.transmit()
         # Wait for tx done interrupt with explicit polling (not ideal but
@@ -732,7 +758,9 @@ class RFM9x:
         return got_ack
 
     # pylint: disable=too-many-branches
-    def receive(self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None):
+    def receive(
+        self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None
+    ):
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
         are returned, otherwise None is returned (which indicates the timeout elapsed with no
         reception).
@@ -741,7 +769,7 @@ class RFM9x:
         future reception.
         All packets must have a 4-byte header for compatibilty with the
         RadioHead library.
-        The header consists of 4 bytes (To,From,ID,Flags). The default setting will strip
+        The header consists of 4 bytes (To,From,ID,Flags). The default setting will  strip
         the header before returning the packet to the caller.
         If with_header is True then the 4 byte header will be returned with the packet.
         The payload then begins at packet[4].
@@ -751,7 +779,7 @@ class RFM9x:
         if timeout is None:
             timeout = self.receive_timeout
         if timeout is not None:
-            # Wait for the payload_ready signal. This is not ideal and will
+            # Wait for the payload_ready signal.  This is not ideal and will
             # surely miss or overflow the FIFO when packets aren't read fast
             # enough, however it's the best that can be done from Python without
             # interrupt supports.
