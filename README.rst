@@ -103,6 +103,11 @@ be altered in the following manner (continued from the above example):
 See examples/rfm9x_simpletest.py for an expanded demo of the usage.
 
 
+Documentation
+=============
+
+API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/rfm9x/en/latest/>`_.
+
 Contributing
 ============
 
