@@ -17,13 +17,15 @@ import time
 import adafruit_bus_device.spi_device as spidev
 from micropython import const
 
+HAS_SUPERVISOR = False
+
 try:
     import supervisor
 
-    HAS_SUPERVISOR = True
+    if hasattr(supervisor, "ticks_ms"):
+        HAS_SUPERVISOR = True
 except ImportError:
-    HAS_SUPERVISOR = False
-
+    pass
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x.git"
 
