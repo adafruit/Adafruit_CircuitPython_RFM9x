@@ -14,10 +14,18 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 """
 import random
 import time
-
 import adafruit_bus_device.spi_device as spidev
 from micropython import const
 
+HAS_SUPERVISOR = False
+
+try:
+    import supervisor
+
+    if hasattr(supervisor, "ticks_ms"):
+        HAS_SUPERVISOR = True
+except ImportError:
+    pass
 __version__ = "0.0.0-auto.0"
 __repo__ = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x.git"
 
@@ -99,7 +107,10 @@ FS_TX_MODE = 0b010
 TX_MODE = 0b011
 FS_RX_MODE = 0b100
 RX_MODE = 0b101
-
+# supervisor.ticks_ms() contants
+_TICKS_PERIOD = const(1 << 29)
+_TICKS_MAX = const(_TICKS_PERIOD - 1)
+_TICKS_HALFPERIOD = const(_TICKS_PERIOD // 2)
 
 # Disable the too many instance members warning.  Pylint has no knowledge
 # of the context and is merely guessing at the proper amount of members.  This
@@ -107,6 +118,15 @@ RX_MODE = 0b101
 # the warning to work around the error.
 # pylint: disable=too-many-instance-attributes
 # pylint: disable=too-many-statements
+
+
+def ticks_diff(ticks1, ticks2):
+    """Compute the signed difference between two ticks values
+    assuming that they are within 2**28 ticks
+    """
+    diff = (ticks1 - ticks2) & _TICKS_MAX
+    diff = ((diff + _TICKS_HALFPERIOD) & _TICKS_MAX) - _TICKS_HALFPERIOD
+    return diff
 
 
 class RFM9x:
@@ -641,6 +661,7 @@ class RFM9x:
         """crc status"""
         return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
+    # pylint: disable=too-many-branches
     def send(
         self,
         data,
@@ -701,11 +722,17 @@ class RFM9x:
         self.transmit()
         # Wait for tx done interrupt with explicit polling (not ideal but
         # best that can be done right now without interrupts).
-        start = time.monotonic()
         timed_out = False
-        while not timed_out and not self.tx_done():
-            if (time.monotonic() - start) >= self.xmit_timeout:
-                timed_out = True
+        if HAS_SUPERVISOR:
+            start = supervisor.ticks_ms()
+            while not timed_out and not self.tx_done():
+                if ticks_diff(supervisor.ticks_ms(), start) >= self.xmit_timeout * 1000:
+                    timed_out = True
+        else:
+            start = time.monotonic()
+            while not timed_out and not self.tx_done():
+                if time.monotonic() - start >= self.xmit_timeout:
+                    timed_out = True
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
@@ -753,7 +780,6 @@ class RFM9x:
         self.flags = 0  # clear flags
         return got_ack
 
-    # pylint: disable=too-many-branches
     def receive(
         self, *, keep_listening=True, with_header=False, with_ack=False, timeout=None
     ):
@@ -781,11 +807,17 @@ class RFM9x:
             # interrupt supports.
             # Make sure we are listening for packets.
             self.listen()
-            start = time.monotonic()
             timed_out = False
-            while not timed_out and not self.rx_done():
-                if (time.monotonic() - start) >= timeout:
-                    timed_out = True
+            if HAS_SUPERVISOR:
+                start = supervisor.ticks_ms()
+                while not timed_out and not self.rx_done():
+                    if ticks_diff(supervisor.ticks_ms(), start) >= timeout * 1000:
+                        timed_out = True
+            else:
+                start = time.monotonic()
+                while not timed_out and not self.rx_done():
+                    if time.monotonic() - start >= timeout:
+                        timed_out = True
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
