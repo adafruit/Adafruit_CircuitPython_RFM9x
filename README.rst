@@ -2,7 +2,7 @@ Introduction
 ============
 
 .. image:: https://readthedocs.org/projects/adafruit-circuitpython-rfm9x/badge/?version=latest
-    :target: https://circuitpython.readthedocs.io/projects/rfm9x/en/latest/
+    :target: https://docs.circuitpython.org/projects/rfm9x/en/latest/
     :alt: Documentation Status
 
 .. image:: https://img.shields.io/discord/327254708534116352.svg
@@ -106,7 +106,7 @@ See examples/rfm9x_simpletest.py for an expanded demo of the usage.
 Documentation
 =============
 
-API documentation for this library can be found on `Read the Docs <https://circuitpython.readthedocs.io/projects/rfm9x/en/latest/>`_.
+API documentation for this library can be found on `Read the Docs <https://docs.circuitpython.org/projects/rfm9x/en/latest/>`_.
 
 Contributing
 ============
