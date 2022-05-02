@@ -30,7 +30,7 @@ except ImportError:
     pass
 
 try:
-    from typing import Optional, Any
+    from typing import Optional
 except ImportError:
     pass
 
@@ -132,7 +132,7 @@ def ticks_diff(ticks1: int, ticks2: int) -> int:
     """Compute the signed difference between two ticks values
     assuming that they are within 2**28 ticks
     """
-    diff: int = (ticks1 - ticks2) & _TICKS_MAX
+    diff = (ticks1 - ticks2) & _TICKS_MAX
     diff = ((diff + _TICKS_HALFPERIOD) & _TICKS_MAX) - _TICKS_HALFPERIOD
     return diff
 
@@ -207,11 +207,11 @@ class RFM9x:
             self._offset = offset
 
         def __get__(self, obj, objtype) -> int:
-            reg_value: int = obj._read_u8(self._address)
+            reg_value = obj._read_u8(self._address)
             return (reg_value & self._mask) >> self._offset
 
         def __set__(self, obj, val) -> None:
-            reg_value: int = obj._read_u8(self._address)
+            reg_value = obj._read_u8(self._address)
             reg_value &= ~self._mask
             reg_value |= (val & 0xFF) << self._offset
             obj._write_u8(self._address, reg_value)
@@ -262,7 +262,7 @@ class RFM9x:
         agc: bool = False,
         crc: bool = True
     ) -> None:
-        self.high_power: bool = high_power
+        self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
         self._device: spidev.SPIDevice = spidev.SPIDevice(
@@ -276,7 +276,7 @@ class RFM9x:
         self.reset()
         # No device type check!  Catch an error from the very first request and
         # throw a nicer message to indicate possible wiring problems.
-        version: int = self._read_u8(_RH_RF95_REG_42_VERSION)
+        version = self._read_u8(_RH_RF95_REG_42_VERSION)
         if version != 18:
             raise RuntimeError(
                 "Failed to find rfm9x with expected version -- check wiring"
@@ -298,78 +298,78 @@ class RFM9x:
         # Set mode idle
         self.idle()
         # Set frequency
-        self.frequency_mhz: float = frequency
+        self.frequency_mhz = frequency
         # Set preamble length (default 8 bytes to match radiohead).
-        self.preamble_length: int = preamble_length
+        self.preamble_length = preamble_length
         # Defaults set modem config to RadioHead compatible Bw125Cr45Sf128 mode.
-        self.signal_bandwidth: int = 125000
-        self.coding_rate: int = 5
-        self.spreading_factor: int = 7
+        self.signal_bandwidth = 125000
+        self.coding_rate = 5
+        self.spreading_factor = 7
         # Default to enable CRC checking on incoming packets.
-        self.enable_crc: bool = crc
+        self.enable_crc = crc
         """CRC Enable state"""
         # set AGC - Default = False
         self.auto_agc = agc
         """Automatic Gain Control state"""
         # Set transmit power to 13 dBm, a safe value any module supports.
-        self.tx_power: int = 13
+        self.tx_power = 13
         # initialize last RSSI reading
-        self.last_rssi: float = 0.0
+        self.last_rssi = 0.0
         """The RSSI of the last received packet. Stored when the packet was received.
            The instantaneous RSSI value may not be accurate once the
            operating mode has been changed.
         """
-        self.last_snr: float = 0.0
+        self.last_snr = 0.0
         """The SNR of the last received packet. Stored when the packet was received.
            The instantaneous SNR value may not be accurate once the
            operating mode has been changed.
         """
         # initialize timeouts and delays delays
-        self.ack_wait: float = 0.5
+        self.ack_wait = 0.5
         """The delay time before attempting a retry after not receiving an ACK"""
-        self.receive_timeout: float = 0.5
+        self.receive_timeout = 0.5
         """The amount of time to poll for a received packet.
            If no packet is received, the returned packet will be None
         """
-        self.xmit_timeout: float = 2.0
+        self.xmit_timeout = 2.0
         """The amount of time to wait for the HW to transmit the packet.
            This is mainly used to prevent a hang due to a HW issue
         """
-        self.ack_retries: int = 5
+        self.ack_retries = 5
         """The number of ACK retries before reporting a failure."""
-        self.ack_delay: Optional[float] = None
+        self.ack_delay = None
         """The delay time before attemting to send an ACK.
            If ACKs are being missed try setting this to .1 or .2.
         """
         # initialize sequence number counter for reliabe datagram mode
-        self.sequence_number: int = 0
+        self.sequence_number = 0
         # create seen Ids list
-        self.seen_ids: bytearray = bytearray(256)
+        self.seen_ids = bytearray(256)
         # initialize packet header
         # node address - default is broadcast
-        self.node: int = _RH_BROADCAST_ADDRESS
+        self.node = _RH_BROADCAST_ADDRESS
         """The default address of this Node. (0-255).
            If not 255 (0xff) then only packets address to this node will be accepted.
            First byte of the RadioHead header.
         """
         # destination address - default is broadcast
-        self.destination: int = _RH_BROADCAST_ADDRESS
+        self.destination = _RH_BROADCAST_ADDRESS
         """The default destination address for packet transmissions. (0-255).
            If 255 (0xff) then any receiving node should accept the packet.
            Second byte of the RadioHead header.
         """
         # ID - contains seq count for reliable datagram mode
-        self.identifier: int = 0
+        self.identifier = 0
         """Automatically set to the sequence number when send_with_ack() used.
            Third byte of the RadioHead header.
         """
         # flags - identifies ack/reetry packet for reliable datagram mode
-        self.flags: int = 0
+        self.flags = 0
         """Upper 4 bits reserved for use by Reliable Datagram Mode.
            Lower 4 bits may be used to pass information.
            Fourth byte of the RadioHead header.
         """
-        self.crc_error_count: int = 0
+        self.crc_error_count = 0
 
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
@@ -530,7 +530,7 @@ class RFM9x:
         """The received strength indicator (in dBm) of the last received message."""
         # Read RSSI register and convert to value using formula in datasheet.
         # Remember in LoRa mode the payload register changes function to RSSI!
-        raw_rssi: int = self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE)
+        raw_rssi = self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE)
         if self.low_frequency_mode:
             raw_rssi -= 157
         else:
@@ -542,7 +542,7 @@ class RFM9x:
         """The SNR (in dB) of the last received message."""
         # Read SNR 0x19 register and convert to value using formula in datasheet.
         # SNR(dB) = PacketSnr [twos complement] / 4
-        snr_byte: int = self._read_u8(_RH_RF95_REG_19_PKT_SNR_VALUE)
+        snr_byte = self._read_u8(_RH_RF95_REG_19_PKT_SNR_VALUE)
         if snr_byte > 127:
             snr_byte = (256 - snr_byte) * -1
         return snr_byte / 4
@@ -553,7 +553,7 @@ class RFM9x:
         value to increase throughput or to a lower value to increase the
         likelihood of successfully received payloads).  Valid values are
         listed in RFM9x.bw_bins."""
-        bw_id: int = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF0) >> 4
+        bw_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0xF0) >> 4
         if bw_id >= len(self.bw_bins):
             current_bandwidth = 500000
         else:
@@ -563,8 +563,6 @@ class RFM9x:
     @signal_bandwidth.setter
     def signal_bandwidth(self, val: int) -> None:
         # Set signal bandwidth (set to 125000 to match RadioHead Bw125).
-        bw_id: int
-        cutoff: int
         for bw_id, cutoff in enumerate(self.bw_bins):
             if val <= cutoff:
                 break
@@ -603,7 +601,7 @@ class RFM9x:
         correction (try setting to a higher value to increase tolerance of
         short bursts of interference or to a lower value to increase bit
         rate).  Valid values are limited to 5, 6, 7, or 8."""
-        cr_id: int = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0E) >> 1
+        cr_id = (self._read_u8(_RH_RF95_REG_1D_MODEM_CONFIG1) & 0x0E) >> 1
         denominator = cr_id + 4
         return denominator
 
@@ -681,7 +679,7 @@ class RFM9x:
     # pylint: disable=too-many-branches
     def send(
         self,
-        data: Any,
+        data,
         *,
         keep_listening: bool = False,
         destination=None,
@@ -760,7 +758,7 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return not timed_out
 
-    def send_with_ack(self, data: Any) -> bool:
+    def send_with_ack(self, data) -> bool:
         """Reliable Datagram mode:
         Send a packet with data and wait for an ACK response.
         The packet header is automatically generated.
@@ -770,7 +768,7 @@ class RFM9x:
             retries_remaining = self.ack_retries
         else:
             retries_remaining = 1
-        got_ack: bool = False
+        got_ack = False
         self.sequence_number = (self.sequence_number + 1) & 0xFF
         while not got_ack and retries_remaining:
             self.identifier = self.sequence_number
@@ -804,7 +802,7 @@ class RFM9x:
         with_header: bool = False,
         with_ack: bool = False,
         timeout: Optional[float] = None
-    ):
+    ) -> Optional[bytearray]:
         """Wait to receive a packet from the receiver. If a packet is found the payload bytes
         are returned, otherwise None is returned (which indicates the timeout elapsed with no
         reception).
@@ -841,7 +839,7 @@ class RFM9x:
                     if time.monotonic() - start >= timeout:
                         timed_out = True
         # Payload ready is set, a packet is in the FIFO.
-        packet: Optional[bytearray] = None
+        packet = None
         # save last RSSI reading
         self.last_rssi = self.rssi
 
