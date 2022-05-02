@@ -870,7 +870,6 @@ class RFM9x:
                 if fifo_length < 5:
                     packet = None
                 else:
-                    assert packet is not None
                     if (
                         self.node != _RH_BROADCAST_ADDRESS
                         and packet[0] != _RH_BROADCAST_ADDRESS
