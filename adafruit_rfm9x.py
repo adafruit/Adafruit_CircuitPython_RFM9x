@@ -15,9 +15,7 @@ http: www.airspayce.com/mikem/arduino/RadioHead/
 import random
 import time
 import adafruit_bus_device.spi_device as spidev
-from digitalio import DigitalInOut
 from micropython import const
-from busio import SPI
 
 HAS_SUPERVISOR = False
 
@@ -30,7 +28,11 @@ except ImportError:
     pass
 
 try:
-    from typing import Optional
+    from typing import Optional, Type, Literal
+    from digitalio import DigitalInOut
+    from busio import SPI
+    from circuitpython_typing import WriteableBuffer, ReadableBuffer
+
 except ImportError:
     pass
 
@@ -206,11 +208,11 @@ class RFM9x:
             self._mask <<= offset
             self._offset = offset
 
-        def __get__(self, obj, objtype) -> int:
+        def __get__(self, obj: "RFM9x", objtype: Type["RFM9x"]) -> int:
             reg_value = obj._read_u8(self._address)
             return (reg_value & self._mask) >> self._offset
 
-        def __set__(self, obj, val) -> None:
+        def __set__(self, obj: "RFM9x", val: int) -> None:
             reg_value = obj._read_u8(self._address)
             reg_value &= ~self._mask
             reg_value |= (val & 0xFF) << self._offset
@@ -252,11 +254,11 @@ class RFM9x:
     def __init__(
         self,
         spi: SPI,
-        cs: Optional[DigitalInOut],
+        cs: DigitalInOut,
         reset: DigitalInOut,
         frequency: int,
         *,
-        preamble_length=8,
+        preamble_length: int = 8,
         high_power: bool = True,
         baudrate: int = 5000000,
         agc: bool = False,
@@ -374,7 +376,7 @@ class RFM9x:
     # pylint: disable=no-member
     # Reconsider pylint: disable when this can be tested
     def _read_into(
-        self, address: int, buf: bytearray, length: Optional[int] = None
+        self, address: int, buf: WriteableBuffer, length: Optional[int] = None
     ) -> None:
         # Read a number of bytes from the specified address into the provided
         # buffer.  If length is not specified (the default) the entire buffer
@@ -393,7 +395,7 @@ class RFM9x:
         return self._BUFFER[0]
 
     def _write_from(
-        self, address: int, buf: bytearray, length: Optional[int] = None
+        self, address: int, buf: ReadableBuffer, length: Optional[int] = None
     ) -> None:
         # Write a number of bytes to the provided address and taken from the
         # provided buffer.  If no length is specified (the default) the entire
@@ -464,7 +466,7 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_21_PREAMBLE_LSB, val & 0xFF)
 
     @property
-    def frequency_mhz(self) -> float:
+    def frequency_mhz(self) -> Literal[433.0, 915.0]:
         """The frequency of the radio in Megahertz. Only the allowed values for
         your radio must be specified (i.e. 433 vs. 915 mhz)!
         """
@@ -476,7 +478,7 @@ class RFM9x:
         return frequency
 
     @frequency_mhz.setter
-    def frequency_mhz(self, val: int) -> None:
+    def frequency_mhz(self, val: Literal[433.0, 915.0]) -> None:
         if val < 240 or val > 960:
             raise RuntimeError("frequency_mhz must be between 240 and 960")
         # Calculate FRF register 24-bit value.
@@ -596,7 +598,7 @@ class RFM9x:
             self._write_u8(0x30, 0)
 
     @property
-    def coding_rate(self) -> int:
+    def coding_rate(self) -> Literal[5, 6, 7, 8]:
         """The coding rate used by the radio to control forward error
         correction (try setting to a higher value to increase tolerance of
         short bursts of interference or to a lower value to increase bit
@@ -606,7 +608,7 @@ class RFM9x:
         return denominator
 
     @coding_rate.setter
-    def coding_rate(self, val: int) -> None:
+    def coding_rate(self, val: Literal[5, 6, 7, 8]) -> None:
         # Set coding rate (set to 5 to match RadioHead Cr45).
         denominator = min(max(val, 5), 8)
         cr_id = denominator - 4
@@ -616,7 +618,7 @@ class RFM9x:
         )
 
     @property
-    def spreading_factor(self) -> int:
+    def spreading_factor(self) -> Literal[6, 7, 8, 9, 10, 11, 12]:
         """The spreading factor used by the radio (try setting to a higher
         value to increase the receiver's ability to distinguish signal from
         noise or to a lower value to increase the data transmission rate).
@@ -625,7 +627,7 @@ class RFM9x:
         return sf_id
 
     @spreading_factor.setter
-    def spreading_factor(self, val: int) -> None:
+    def spreading_factor(self, val: Literal[6, 7, 8, 9, 10, 11, 12]) -> None:
         # Set spreading factor (set to 7 to match RadioHead Sf128).
         val = min(max(val, 6), 12)
 
@@ -664,24 +666,24 @@ class RFM9x:
                 self._read_u8(_RH_RF95_REG_1E_MODEM_CONFIG2) & 0xFB,
             )
 
-    def tx_done(self) -> int:
+    def tx_done(self) -> bool:
         """Transmit status"""
         return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x8) >> 3
 
-    def rx_done(self) -> int:
+    def rx_done(self) -> bool:
         """Receive status"""
         return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x40) >> 6
 
-    def crc_error(self) -> int:
+    def crc_error(self) -> bool:
         """crc status"""
         return (self._read_u8(_RH_RF95_REG_12_IRQ_FLAGS) & 0x20) >> 5
 
     # pylint: disable=too-many-branches
     def send(
         self,
-        data,
+        data: ReadableBuffer,
         *,
-        keep_listening: bool = False,
+        keep_listening: Optional[int] = False,
         destination=None,
         node=None,
         identifier=None,
@@ -798,7 +800,7 @@ class RFM9x:
     def receive(
         self,
         *,
-        keep_listening: bool = True,
+        keep_listening: Optional[int] = True,
         with_header: bool = False,
         with_ack: bool = False,
         timeout: Optional[float] = None
