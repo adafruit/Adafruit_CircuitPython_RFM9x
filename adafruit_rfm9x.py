@@ -683,11 +683,11 @@ class RFM9x:
         self,
         data: ReadableBuffer,
         *,
-        keep_listening: Optional[int] = False,
-        destination=None,
-        node=None,
-        identifier=None,
-        flags=None
+        keep_listening: bool = False,
+        destination: Optional[int] = None,
+        node: Optional[int] = None,
+        identifier: Optional[int] = None,
+        flags: Optional[int] = None
     ) -> bool:
         """Send a string of data using the transmitter.
         You can only send 252 bytes at a time
@@ -760,7 +760,7 @@ class RFM9x:
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return not timed_out
 
-    def send_with_ack(self, data) -> bool:
+    def send_with_ack(self, data: ReadableBuffer) -> bool:
         """Reliable Datagram mode:
         Send a packet with data and wait for an ACK response.
         The packet header is automatically generated.
@@ -800,7 +800,7 @@ class RFM9x:
     def receive(
         self,
         *,
-        keep_listening: Optional[int] = True,
+        keep_listening: bool = True,
         with_header: bool = False,
         with_ack: bool = False,
         timeout: Optional[float] = None
