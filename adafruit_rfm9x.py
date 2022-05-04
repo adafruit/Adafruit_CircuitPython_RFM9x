@@ -267,9 +267,7 @@ class RFM9x:
         self.high_power = high_power
         # Device support SPI mode 0 (polarity & phase = 0) up to a max of 10mhz.
         # Set Default Baudrate to 5MHz to avoid problems
-        self._device: spidev.SPIDevice = spidev.SPIDevice(
-            spi, cs, baudrate=baudrate, polarity=0, phase=0
-        )
+        self._device = spidev.SPIDevice(spi, cs, baudrate=baudrate, polarity=0, phase=0)
         # Setup reset as a digital output - initially High
         # This line is pulled low as an output quickly to trigger a reset.
         self._reset = reset
