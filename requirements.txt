@@ -2,5 +2,5 @@
 #
 # SPDX-License-Identifier: Unlicense
 
-Adafruit-Blinka
+Adafruit-Blinka>=7.2.3
 adafruit-circuitpython-busdevice
