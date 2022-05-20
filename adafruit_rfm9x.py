@@ -28,10 +28,15 @@ except ImportError:
     pass
 
 try:
-    from typing import Optional, Type, Literal
+    from typing import Optional, Type
     from digitalio import DigitalInOut
     from busio import SPI
     from circuitpython_typing import WriteableBuffer, ReadableBuffer
+
+    try:
+        from typing import Literal
+    except ImportError:
+        from typing_extensions import Literal
 
 except ImportError:
     pass
