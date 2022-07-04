@@ -13,6 +13,10 @@ requires = [
 name = "adafruit-circuitpython-rfm9x"
 description = "CircuitPython library for RFM95/6/7/8 LoRa 433/915mhz radio modules."
 readme = "README.rst"
+authors = [
+    {name = "Adafruit Industries", email = "circuitpython@adafruit.com"}
+]
+urls = {Homepage = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x"} 
 keywords = [
     "adafruit",
     "lora",
