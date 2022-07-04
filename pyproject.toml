@@ -16,7 +16,7 @@ readme = "README.rst"
 authors = [
     {name = "Adafruit Industries", email = "circuitpython@adafruit.com"}
 ]
-urls = {Homepage = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x"} 
+urls = {Homepage = "https://github.com/adafruit/Adafruit_CircuitPython_RFM9x"}
 keywords = [
     "adafruit",
     "lora",
