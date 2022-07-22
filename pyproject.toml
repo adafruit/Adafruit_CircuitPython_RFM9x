@@ -12,6 +12,7 @@ requires = [
 [project]
 name = "adafruit-circuitpython-rfm9x"
 description = "CircuitPython library for RFM95/6/7/8 LoRa 433/915mhz radio modules."
+version = "0.0.0-auto.0"
 readme = "README.rst"
 authors = [
     {name = "Adafruit Industries", email = "circuitpython@adafruit.com"}
@@ -39,12 +40,10 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
 ]
-dynamic = ["version", "dependencies"]
+dynamic = ["dependencies"]
 
 [tool.setuptools]
 py-modules = ["adafruit_rfm9x"]
 
 [tool.setuptools.dynamic]
 dependencies = {file = ["requirements.txt"]}
-
-[tool.setuptools_scm]
