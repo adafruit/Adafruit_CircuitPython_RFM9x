@@ -6,6 +6,7 @@
 
 import os
 import sys
+import datetime
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -46,7 +47,8 @@ master_doc = "index"
 
 # General information about the project.
 project = "Adafruit RFM9x Library"
-copyright = "2018 Tony DiCola"
+current_year = str(datetime.datetime.now().year)
+copyright = current_year + " Tony DiCola"
 author = "Tony DiCola"
 
 # The version info for the project you're documenting, acts as replacement for
