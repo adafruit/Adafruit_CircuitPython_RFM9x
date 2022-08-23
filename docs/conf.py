@@ -47,8 +47,14 @@ master_doc = "index"
 
 # General information about the project.
 project = "Adafruit RFM9x Library"
+creation_year = "2018"
 current_year = str(datetime.datetime.now().year)
-copyright = current_year + " Tony DiCola"
+year_duration = (
+    current_year
+    if current_year == creation_year
+    else creation_year + " - " + current_year
+)
+copyright = year_duration + " Tony DiCola"
 author = "Tony DiCola"
 
 # The version info for the project you're documenting, acts as replacement for
