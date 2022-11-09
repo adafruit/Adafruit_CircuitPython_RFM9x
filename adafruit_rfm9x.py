@@ -259,7 +259,7 @@ class RFM9x:
     def __init__(
         self,
         spi: SPI,
-        cs: DigitalInOut,
+        cs: DigitalInOut,  # pylint: disable=invalid-name
         reset: DigitalInOut,
         frequency: int,
         *,
