@@ -5,9 +5,11 @@
 # Author: Jerry Needell
 #
 import time
+
 import board
 import busio
 import digitalio
+
 import adafruit_rfm9x
 
 # set the time interval (seconds) for sending packets
@@ -38,7 +40,7 @@ rfm9x.tx_power = 23
 # initialize counter
 counter = 0
 # send a broadcast mesage
-rfm9x.send(bytes("message number {}".format(counter), "UTF-8"))
+rfm9x.send(bytes(f"message number {counter}", "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -52,7 +54,7 @@ while True:
     if packet is not None:
         # Received a packet!
         # Print out the raw bytes of the packet:
-        print("Received (raw bytes): {0}".format(packet))
+        print(f"Received (raw bytes): {packet}")
         # send reading after any packet received
     if time.monotonic() - time_now > transmit_interval:
         # reset timeer
@@ -60,4 +62,4 @@ while True:
         # clear flag to send data
         send_reading = False
         counter = counter + 1
-        rfm9x.send(bytes("message number {}".format(counter), "UTF-8"))
+        rfm9x.send(bytes(f"message number {counter}", "UTF-8"))

@@ -1,12 +1,10 @@
-# -*- coding: utf-8 -*-
-
 # SPDX-FileCopyrightText: 2021 ladyada for Adafruit Industries
 #
 # SPDX-License-Identifier: MIT
 
+import datetime
 import os
 import sys
-import datetime
 
 sys.path.insert(0, os.path.abspath(".."))
 
@@ -26,7 +24,7 @@ extensions = [
 # Uncomment the below if you use native CircuitPython modules such as
 # digitalio, micropython and busio. List the modules you use. Without it, the
 # autodoc module docs will fail to generate with a warning.
-# autodoc_mock_imports = ["digitalio", "busio", "micropython", "adafruit_bus_device.spi_device", "adafruit_bus_device"]
+# autodoc_mock_imports = ["digitalio", "busio"]
 
 
 intersphinx_mapping = {
@@ -51,9 +49,7 @@ project = "Adafruit RFM9x Library"
 creation_year = "2018"
 current_year = str(datetime.datetime.now().year)
 year_duration = (
-    current_year
-    if current_year == creation_year
-    else creation_year + " - " + current_year
+    current_year if current_year == creation_year else creation_year + " - " + current_year
 )
 copyright = year_duration + " Tony DiCola"
 author = "Tony DiCola"
