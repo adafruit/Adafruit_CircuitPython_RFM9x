@@ -5,11 +5,12 @@
 # Author: Jerry Needell
 #
 import time
+
 import board
 import busio
 import digitalio
-import adafruit_rfm9x
 
+import adafruit_rfm9x
 
 # set the time interval (seconds) for sending packets
 transmit_interval = 10
@@ -33,9 +34,7 @@ rfm9x.destination = 2
 # initialize counter
 counter = 0
 # send a broadcast message from my_node with ID = counter
-rfm9x.send(
-    bytes("Startup message {} from node {}".format(counter, rfm9x.node), "UTF-8")
-)
+rfm9x.send(bytes(f"Startup message {counter} from node {rfm9x.node}", "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -48,16 +47,14 @@ while True:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw header):", [hex(x) for x in packet[0:4]])
-        print("Received (raw payload): {0}".format(packet[4:]))
-        print("Received RSSI: {0}".format(rfm9x.last_rssi))
+        print(f"Received (raw payload): {packet[4:]}")
+        print(f"Received RSSI: {rfm9x.last_rssi}")
     if time.monotonic() - now > transmit_interval:
         now = time.monotonic()
         counter = counter + 1
         # send a  mesage to destination_node from my_node
         rfm9x.send(
-            bytes(
-                "message number {} from node {}".format(counter, rfm9x.node), "UTF-8"
-            ),
+            bytes(f"message number {counter} from node {rfm9x.node}", "UTF-8"),
             keep_listening=True,
         )
         button_pressed = None

@@ -7,16 +7,18 @@
 # CircuitPython does not support interrupts so it will not work on  Circutpython boards
 # Author: Tony DiCola, Jerry Needell
 import time
+
 import board
 import busio
 import digitalio
 import RPi.GPIO as io
+
 import adafruit_rfm9x
 
 
 # setup interrupt callback function
 def rfm9x_callback(rfm9x_irq):
-    global packet_received  # pylint: disable=global-statement
+    global packet_received  # noqa: PLW0603
     print("IRQ detected ", rfm9x_irq, rfm9x.rx_done)
     # check to see if this was a rx interrupt - ignore tx
     if rfm9x.rx_done:
@@ -25,9 +27,9 @@ def rfm9x_callback(rfm9x_irq):
             packet_received = True
             # Received a packet!
             # Print out the raw bytes of the packet:
-            print("Received (raw bytes): {0}".format(packet))
+            print(f"Received (raw bytes): {packet}")
             print([hex(x) for x in packet])
-            print("RSSI: {0}".format(rfm9x.last_rssi))
+            print(f"RSSI: {rfm9x.last_rssi}")
 
 
 # Define radio parameters.

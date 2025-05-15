@@ -4,12 +4,12 @@
 # Example to send a packet periodically between addressed nodes
 # Author: Jerry Needell
 #
+# Import the SSD1306 module.
+import adafruit_ssd1306
 import board
 import busio
 import digitalio
 
-# Import the SSD1306 module.
-import adafruit_ssd1306
 import adafruit_rfm9x
 
 # Button A
@@ -72,9 +72,7 @@ rfm9x.destination = 2
 # initialize counter
 counter = 0
 # send a broadcast message from my_node with ID = counter
-rfm9x.send(
-    bytes("Startup message {} from node {}".format(counter, rfm9x.node), "UTF-8")
-)
+rfm9x.send(bytes(f"Startup message {counter} from node {rfm9x.node}", "UTF-8"))
 
 # Wait to receive packets.
 print("Waiting for packets...")
@@ -87,8 +85,8 @@ while True:
         # Received a packet!
         # Print out the raw bytes of the packet:
         print("Received (raw header):", [hex(x) for x in packet[0:4]])
-        print("Received (raw payload): {0}".format(packet[4:]))
-        print("Received RSSI: {0}".format(rfm9x.last_rssi))
+        print(f"Received (raw payload): {packet[4:]}")
+        print(f"Received RSSI: {rfm9x.last_rssi}")
     # Check buttons
     if not btnA.value:
         button_pressed = "A"
@@ -114,9 +112,7 @@ while True:
         # send a  mesage to destination_node from my_node
         rfm9x.send(
             bytes(
-                "message number {} from node {} button {}".format(
-                    counter, rfm9x.node, button_pressed
-                ),
+                f"message number {counter} from node {rfm9x.node} button {button_pressed}",
                 "UTF-8",
             ),
             keep_listening=True,
