@@ -816,6 +816,13 @@ class RFM9x:
                 while not timed_out and not self.rx_done():
                     if time.monotonic() - start >= timeout:
                         timed_out = True
+
+        if timed_out and not self.rx_done():
+            # don't touch the FIFO if we want to keep listening
+            if not keep_listening:
+                self.idle()
+            return None
+
         # Payload ready is set, a packet is in the FIFO.
         packet = None
         # save last RSSI reading
@@ -826,63 +833,57 @@ class RFM9x:
 
         # Enter idle mode to stop receiving other packets.
         self.idle()
-        if not timed_out:
-            if self.enable_crc and self.crc_error():
-                self.crc_error_count += 1
+        if self.enable_crc and self.crc_error():
+            self.crc_error_count += 1
+        else:
+            # Read the data from the FIFO.
+            # Read the length of the FIFO.
+            fifo_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
+            # Handle if the received packet is too small to include the 4 byte
+            # RadioHead header and at least one byte of data --reject this packet and ignore it.
+            if fifo_length > 0:  # read and clear the FIFO if anything in it
+                current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
+                self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
+                packet = bytearray(fifo_length)
+                # Read the packet.
+                self._read_into(_RH_RF95_REG_00_FIFO, packet)
+            if fifo_length < 5:
+                packet = None
             else:
-                # Read the data from the FIFO.
-                # Read the length of the FIFO.
-                fifo_length = self._read_u8(_RH_RF95_REG_13_RX_NB_BYTES)
-                # Handle if the received packet is too small to include the 4 byte
-                # RadioHead header and at least one byte of data --reject this packet and ignore it.
-                if fifo_length > 0:  # read and clear the FIFO if anything in it
-                    current_addr = self._read_u8(_RH_RF95_REG_10_FIFO_RX_CURRENT_ADDR)
-                    self._write_u8(_RH_RF95_REG_0D_FIFO_ADDR_PTR, current_addr)
-                    packet = bytearray(fifo_length)
-                    # Read the packet.
-                    self._read_into(_RH_RF95_REG_00_FIFO, packet)
-                # Clear interrupt.
-                self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
-                if fifo_length < 5:
+                if self.node != _RH_BROADCAST_ADDRESS and packet[0] not in {
+                    _RH_BROADCAST_ADDRESS,
+                    self.node,
+                }:
                     packet = None
-                else:
-                    if self.node != _RH_BROADCAST_ADDRESS and packet[0] not in {
-                        _RH_BROADCAST_ADDRESS,
-                        self.node,
-                    }:
-                        packet = None
-                    # send ACK unless this was an ACK or a broadcast
-                    elif (
-                        with_ack
-                        and ((packet[3] & _RH_FLAGS_ACK) == 0)
-                        and (packet[0] != _RH_BROADCAST_ADDRESS)
+                # send ACK unless this was an ACK or a broadcast
+                elif (
+                    with_ack
+                    and ((packet[3] & _RH_FLAGS_ACK) == 0)
+                    and (packet[0] != _RH_BROADCAST_ADDRESS)
+                ):
+                    # delay before sending Ack to give receiver a chance to get ready
+                    if self.ack_delay is not None:
+                        time.sleep(self.ack_delay)
+                    # send ACK packet to sender (data is b'!')
+                    self.send(
+                        b"!",
+                        destination=packet[1],
+                        node=packet[0],
+                        identifier=packet[2],
+                        flags=(packet[3] | _RH_FLAGS_ACK),
+                    )
+                    # reject Retries if we have seen this idetifier from this source before
+                    if (self.seen_ids[packet[1]] == packet[2]) and (
+                        packet[3] & _RH_FLAGS_RETRY
                     ):
-                        # delay before sending Ack to give receiver a chance to get ready
-                        if self.ack_delay is not None:
-                            time.sleep(self.ack_delay)
-                        # send ACK packet to sender (data is b'!')
-                        self.send(
-                            b"!",
-                            destination=packet[1],
-                            node=packet[0],
-                            identifier=packet[2],
-                            flags=(packet[3] | _RH_FLAGS_ACK),
-                        )
-                        # reject Retries if we have seen this idetifier from this source before
-                        if (self.seen_ids[packet[1]] == packet[2]) and (
-                            packet[3] & _RH_FLAGS_RETRY
-                        ):
-                            packet = None
-                        else:  # save the packet identifier for this source
-                            self.seen_ids[packet[1]] = packet[2]
-                    if not with_header and packet is not None:  # skip the header if not wanted
-                        packet = packet[4:]
+                        packet = None
+                    else:  # save the packet identifier for this source
+                        self.seen_ids[packet[1]] = packet[2]
+                if not with_header and packet is not None:  # skip the header if not wanted
+                    packet = packet[4:]
         # Listen again if necessary and return the result packet.
         if keep_listening:
             self.listen()
-        else:
-            # Enter idle mode to stop receiving other packets.
-            self.idle()
         # Clear interrupt.
         self._write_u8(_RH_RF95_REG_12_IRQ_FLAGS, 0xFF)
         return packet
