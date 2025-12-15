@@ -873,9 +873,7 @@ class RFM9x:
                         flags=(packet[3] | _RH_FLAGS_ACK),
                     )
                     # reject Retries if we have seen this idetifier from this source before
-                    if (self.seen_ids[packet[1]] == packet[2]) and (
-                        packet[3] & _RH_FLAGS_RETRY
-                    ):
+                    if (self.seen_ids[packet[1]] == packet[2]) and (packet[3] & _RH_FLAGS_RETRY):
                         packet = None
                     else:  # save the packet identifier for this source
                         self.seen_ids[packet[1]] = packet[2]
