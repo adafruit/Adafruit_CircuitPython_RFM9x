@@ -518,9 +518,9 @@ class RFM9x:
         # Remember in LoRa mode the payload register changes function to RSSI!
         raw_rssi = self._read_u8(_RH_RF95_REG_1A_PKT_RSSI_VALUE)
         if self.low_frequency_mode:
-            raw_rssi -= 157
-        else:
             raw_rssi -= 164
+        else:
+            raw_rssi -= 157
         return raw_rssi
 
     @property
