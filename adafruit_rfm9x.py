@@ -706,7 +706,7 @@ class RFM9x:
             payload[3] = self.flags
         else:  # use kwarg
             payload[3] = flags
-        payload = payload + data
+        payload += data
         # Write payload.
         self._write_from(_RH_RF95_REG_00_FIFO, payload)
         # Write payload and header length.
@@ -767,7 +767,7 @@ class RFM9x:
             if not got_ack:
                 # delay by random amount before next try
                 time.sleep(self.ack_wait + self.ack_wait * random.random())
-            retries_remaining = retries_remaining - 1
+            retries_remaining -= 1
             # set retry flag in packet header
             self.flags |= _RH_FLAGS_RETRY
         self.flags = 0  # clear flags

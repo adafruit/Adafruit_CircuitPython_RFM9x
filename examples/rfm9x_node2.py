@@ -49,7 +49,7 @@ while True:
         print(f"Received (raw payload): {packet[4:]}")
         print(f"Received RSSI: {rfm9x.last_rssi}")
         # send reading after any packet received
-        counter = counter + 1
+        counter += 1
         # after 10 messages send a response to destination_node from my_node with ID = counter&0xff
         if counter % 10 == 0:
             time.sleep(0.5)  # brief delay before responding

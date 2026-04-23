@@ -51,7 +51,7 @@ while True:
         print(f"Received RSSI: {rfm9x.last_rssi}")
     if time.monotonic() - now > transmit_interval:
         now = time.monotonic()
-        counter = counter + 1
+        counter += 1
         # send a  mesage to destination_node from my_node
         rfm9x.send(
             bytes(f"message number {counter} from node {rfm9x.node}", "UTF-8"),

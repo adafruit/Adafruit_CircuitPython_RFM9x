@@ -108,7 +108,7 @@ while True:
         display.show()
         # send reading after any button pressed
     if button_pressed is not None:
-        counter = counter + 1
+        counter += 1
         # send a  mesage to destination_node from my_node
         rfm9x.send(
             bytes(

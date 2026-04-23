@@ -61,5 +61,5 @@ while True:
         time_now = time.monotonic()
         # clear flag to send data
         send_reading = False
-        counter = counter + 1
+        counter += 1
         rfm9x.send(bytes(f"message number {counter}", "UTF-8"))
